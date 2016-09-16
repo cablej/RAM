@@ -21,7 +21,6 @@ describe('RAM Relationship Type', () => {
                 longDecodeText: 'Relationship Type 1',
                 startDate: new Date(),
                 attributeNameUsages: [],
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
 
@@ -32,7 +31,6 @@ describe('RAM Relationship Type', () => {
                 startDate: new Date(),
                 endDate: new Date(2099, 1, 1),
                 attributeNameUsages: [],
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
 
@@ -43,7 +41,6 @@ describe('RAM Relationship Type', () => {
                 startDate: new Date(2016, 1, 1),
                 endDate: new Date(2016, 1, 2),
                 attributeNameUsages: [],
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
 
@@ -155,7 +152,6 @@ describe('RAM Relationship Type', () => {
                 startDate: new Date(),
                 minCredentialStrength: minCredentialStrength,
                 minIdentityStrength: minIdentityStrength,
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
 
@@ -183,7 +179,6 @@ describe('RAM Relationship Type', () => {
                 shortDecodeText: 'Some short decode text',
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
             fail('should not have inserted with null code');
@@ -202,7 +197,6 @@ describe('RAM Relationship Type', () => {
                 shortDecodeText: 'Some short decode text',
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
             fail('should not have inserted with empty code');
@@ -224,7 +218,6 @@ describe('RAM Relationship Type', () => {
                 shortDecodeText: 'Some short decode text',
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
 
@@ -233,7 +226,6 @@ describe('RAM Relationship Type', () => {
                 shortDecodeText: 'Some short decode text',
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code
             });
 

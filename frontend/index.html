@@ -35,6 +35,7 @@
                 }
             }
         </style>
+
 </head>
 
 <body>
@@ -42,6 +43,7 @@
     <ram-app></ram-app>
 
     <script src="/js/lib/ie10-viewport-bug-workaround.js"></script>
+
     <!-- 1. Load libraries -->
     <!-- IE required polyfills, in this exact order -->
     <!--
@@ -52,7 +54,7 @@
       expected deep within the Angular-2 framework.
       -->
     <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Intl.~locale.en"></script>
-   <script src="//cdn.rawgit.com/systemjs/systemjs/master/dist/system.js"></script>
+    <script src="//cdn.rawgit.com/systemjs/systemjs/master/dist/system.js"></script>
     <!--<script src="jspm_packages/system.js"></script>-->
     <script src="system.config.js"></script>
 
@@ -87,13 +89,14 @@
 
     <!--
         Required to fulfill RAMTEST-6.
-        Combimed files for JSPM and RAM code. If search string on loading
+        Combined files for JSPM and RAM code. If search string on loading
         URL starts with ?debug then ram-app is ignored and the individual
         JS files are loaded (not for JSPM libraries). This gives access to
         TypeScript code in the debugger.
      -->
     <script src="ram-lib.js"></script>
     <script src="ram-app.js"></script>
+
     <script>
         System.import('primeui/themes/omega/theme.css!');
         System.import('primeui/primeui-ng-all.min.css!');

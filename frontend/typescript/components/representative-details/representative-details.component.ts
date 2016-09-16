@@ -1,12 +1,12 @@
 import {Input, Output, EventEmitter, Component} from '@angular/core';
 import {
     IndividualRepresentativeDetailsComponent,
-    IndividualRepresentativeDetailsComponentData} from
-'./individual-representative-details/individual-representative-details.component';
+    IndividualRepresentativeDetailsComponentData
+} from './individual-representative-details/individual-representative-details.component';
 import {
     OrganisationRepresentativeDetailsComponent,
-    OrganisationRepresentativeDetailsComponentData} from
-'./organisation-representative-details/organisation-representative-details.component';
+    OrganisationRepresentativeDetailsComponentData
+} from './organisation-representative-details/organisation-representative-details.component';
 
 @Component({
     selector: 'representative-details',
@@ -22,41 +22,50 @@ export class RepresentativeDetailsComponent {
     @Input('data') public data: RepresentativeDetailsComponentData;
 
     @Output('dataChange') public dataChanges = new EventEmitter<RepresentativeDetailsComponentData>();
-
     @Output('isValid') public isValid = new EventEmitter<boolean>();
 
-    public isOrganisation: boolean = false;
-
-    public setChildValidationStatus(isOrganisation: boolean, isValid: boolean) {
-        if (isOrganisation && this.isOrganisation) {
-            this.isValid.emit(isValid);
-        } else if (!isOrganisation && !this.isOrganisation) {
-            this.isValid.emit(isValid);
+    public emitIndividualValidStatus(valid: boolean) {
+        if (!this.isOrganisation()) {
+            this.isValid.emit(valid);
         }
     }
 
-    public toggleIndividualOrganisation(isOrganisation: boolean) {
-        this.isOrganisation = isOrganisation;
-        if (isOrganisation) {
-            this.data.individual = undefined;
-            this.data.organisation = {
-                abn: '',
-                organisationName: ''
-            };
-        } else {
-            this.data.organisation = undefined;
-            this.data.individual = {
-                givenName: '',
-                familyName: null,
-                dob: null
-            };
+    public emitOrganisationValidStatus(valid: boolean) {
+        if (this.isOrganisation()) {
+            this.isValid.emit(valid);
         }
+    }
+
+    public toggleIndividual() {
+        this.data.organisation = undefined;
+        this.data.individual = {
+            givenName: '',
+            familyName: '',
+            dob: null
+        };
+    }
+
+    public toggleOrganisation() {
+        this.data.individual = undefined;
+        this.data.organisation = {
+            abn: '',
+            organisationName: ''
+        };
+    }
+
+    public isDisabled(): boolean {
+        return this.data.readOnly;
+    }
+
+    public isOrganisation(): boolean {
+        return this.data && this.data.organisation !== null && this.data.organisation !== undefined;
     }
 
 }
 
 export interface RepresentativeDetailsComponentData {
+    readOnly: boolean;
+    showDob: boolean;
     individual?: IndividualRepresentativeDetailsComponentData;
     organisation?: OrganisationRepresentativeDetailsComponentData;
-    isOrganisation: boolean;
 }

@@ -1,11 +1,14 @@
 import * as mongoose from 'mongoose';
 import {RAMSchema, IRAMObject, RAMObject, Model} from './base';
 import {IRelationshipAttributeName, RelationshipAttributeNameModel} from './relationshipAttributeName.model';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _RelationshipAttributeNameModel = RelationshipAttributeNameModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -22,15 +25,15 @@ const RelationshipAttributeNameUsageSchema = RAMSchema({
         required: [true, 'Optional Indicator is required']
     },
     defaultValue: {
-      type: String,
-      required: false,
-      trim: true
+        type: String,
+        required: false,
+        trim: true
     },
     attributeName: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'RelationshipAttributeName'
     },
-    sortOrder : {
+    sortOrder: {
         type: Number,
         required: true
     }
@@ -52,6 +55,10 @@ class RelationshipAttributeNameUsage extends RAMObject implements IRelationshipA
     public attributeName: IRelationshipAttributeName;
     public sortOrder: number;
 
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.relationshipAttributeNameUsage, PermissionEnforcers.relationshipAttributeNameUsage);
+    }
+
 }
 
 interface IRelationshipAttributeNameUsageDocument extends IRelationshipAttributeNameUsage, mongoose.Document {
@@ -60,9 +67,11 @@ interface IRelationshipAttributeNameUsageDocument extends IRelationshipAttribute
 // static .............................................................................................................
 
 export class RelationshipAttributeNameUsageModel {
+
     public static async create(source: any): Promise<IRelationshipAttributeNameUsage> {
         return RelationshipAttributeNameUsageMongooseModel.create(source);
     }
+
 }
 
 // concrete model .....................................................................................................

@@ -118,6 +118,10 @@ $pagination-disabled-border: $brand-primary;
   padding-bottom: ($line-height-computed * 4);
 }
 
+h4 {
+  line-height: 1.2em;
+}
+
 a {
   cursor: pointer;
 }
@@ -166,16 +170,32 @@ div.navbar-header {
 
 .table > thead > tr > th, .table > tbody > tr > td {
   padding: 15px;
+  vertical-align: middle;
 }
 
 .table td.vmiddle {
   vertical-align: middle;
 }
 
+.table td span.label {
+  margin-left: 5px;
+  text-transform: uppercase;
+}
+
 blockquote {
   background: $well-bg;
   border-left-color: $brand-primary;
   font-size: 15px;
+  margin: 1.5em 0;
+}
+
+ng2-markdown h1:first-child,
+ng2-markdown h2:first-child,
+ng2-markdown h3:first-child,
+ng2-markdown h4:first-child,
+ng2-markdown h5:first-child,
+ng2-markdown h6:first-child {
+  margin-top: 0;
 }
 
 select, select.form-control {
@@ -438,9 +458,9 @@ footer {
 }
 
 #page-header h1 {
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 3px solid #e6e6e6;
   padding: 0 0 0.5em 0;
-  margin: 0 0 1em 0;
+  margin: 0 0 1.5em 0;
   text-align: left;
 }
 
@@ -480,8 +500,8 @@ footer {
 }
 
 #action-button-bar {
-  border-top: 1px solid #e6e6e6;
-  margin: 3em 0 0 0;
+  border-top: 3px solid #e6e6e6;
+  margin: 3.5em 0 0 0;
   padding: 2em 0 0 0;
   overflow: hidden;
 }
@@ -500,9 +520,10 @@ footer {
 
 .panel-heading .badge.square {
   border-radius: 0;
-  padding: 10px 15px;
+  padding: 10px 15px 12px 15px;
   font-size: 15px;
   margin-right: 10px;
+  margin-top: -1px;
 }
 
 .table > tbody > tr.relationship-subject-heading {
@@ -536,6 +557,14 @@ footer {
   position: inherit;
 }
 
+.table .btn {
+  min-width: 80px;
+}
+
+div.checkbox input[type="checkbox"] {
+  margin-top: 5px;
+}
+
 div.checkbox.disabled > label, div.radio.disabled > label {
   color: $text-muted;
 }
@@ -546,7 +575,11 @@ div.checkbox.disabled > label, div.radio.disabled > label {
 
 .ui-calendar input {
   background: url('../images/calendar_font_awesome.png') no-repeat 97% 50%;
-  background-size: 25px 25px;
+  background-size: 20px 20px;
+}
+
+.ui-calendar input.ui-state-disabled {
+  background: $input-bg-disabled;
 }
 
 .hasDatepicker {

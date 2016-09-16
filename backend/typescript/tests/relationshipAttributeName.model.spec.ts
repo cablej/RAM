@@ -32,7 +32,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             stringRelationshipAttributeNameFutureEndDate = await RelationshipAttributeNameModel.create({
@@ -44,7 +45,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             stringRelationshipAttributeNameExpiredEndDate = await RelationshipAttributeNameModel.create({
@@ -56,7 +58,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             singleSelectRelationshipAttributeNameNoEndDate = await RelationshipAttributeNameModel.create({
@@ -68,7 +71,8 @@ describe('RAM Relationship Attribute Name', () => {
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
                 purposeText: 'This attribute purpose text',
-                permittedValues: ['Choice 1', 'Choice 2', 'Choice 3']
+                permittedValues: ['Choice 1', 'Choice 2', 'Choice 3'],
+                appliesToInstance: true
             });
 
             relationshipType1 = await RelationshipTypeModel.create({
@@ -76,7 +80,6 @@ describe('RAM Relationship Attribute Name', () => {
                 shortDecodeText: 'Relationship Type 1',
                 longDecodeText: 'Relationship Type 1',
                 startDate: new Date(),
-                managedExternallyInd: false,
                 category: RelationshipTypeCategory.Authorisation.code,
                 attributeNameUsages: [
                     await RelationshipAttributeNameUsageModel.create({
@@ -214,7 +217,8 @@ describe('RAM Relationship Attribute Name', () => {
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
                 purposeText: 'This attribute purpose text',
-                startDate: new Date()
+                startDate: new Date(),
+                appliesToInstance: true
             });
             fail('should not have inserted with null code');
             done();
@@ -234,7 +238,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
             fail('should not have inserted with empty code');
             done();
@@ -253,7 +258,8 @@ describe('RAM Relationship Attribute Name', () => {
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
                 classifier: RelationshipAttributeNameClassifier.Other.code,
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null domain');
             done();
@@ -274,7 +280,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: '__BOGUS__',
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
             fail('should not have inserted with invalid domain');
             done();
@@ -293,7 +300,8 @@ describe('RAM Relationship Attribute Name', () => {
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
                 domain: RelationshipAttributeNameDomain.String.code,
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null domain');
             done();
@@ -313,7 +321,8 @@ describe('RAM Relationship Attribute Name', () => {
                 startDate: new Date(),
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: '__BOGUS__',
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null domain');
             done();
@@ -333,7 +342,8 @@ describe('RAM Relationship Attribute Name', () => {
                 startDate: new Date(),
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null purpose text');
             done();
@@ -354,7 +364,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: ''
+                purposeText: '',
+                appliesToInstance: true
             });
             fail('should not have inserted with empty purpose text');
             done();
@@ -378,7 +389,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             await RelationshipAttributeNameModel.create({
@@ -389,7 +401,8 @@ describe('RAM Relationship Attribute Name', () => {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             fail('should not have inserted with duplicate code');

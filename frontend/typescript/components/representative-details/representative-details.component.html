@@ -6,34 +6,45 @@
 
     <div class="panel-body">
 
-        <form>
+        <form *ngIf='!isDisabled()'>
             <div class="form-group">
                 <div class="radio">
                     <div class="col-lg-2">
                         <label><h4>
                             <input type="radio"
                                    name="repType"
-                                   [checked]="!isOrganisation"
-                                   (change)="toggleIndividualOrganisation(false)">{{'addRelationship.individual' | translate}}</h4></label>
+                                   [checked]="!isOrganisation()"
+                                   (change)="toggleIndividual()">{{'addRelationship.individual' | translate}}</h4></label>
                     </div>
                     <div class="col-lg-2">
                         <label><h4>
                             <input type="radio"
                                    name="repType"
-                                   [checked]="isOrganisation"
-                            (change)="toggleIndividualOrganisation(true)">{{'addRelationship.organisation' | translate}}</h4></label>
+                                   [checked]="isOrganisation()"
+                                   (change)="toggleOrganisation()">{{'addRelationship.organisation' | translate}}</h4></label>
                     </div>
                 </div>
                 <div class="clearfix"></div>
             </div>
         </form>
 
-        <individual-representative-details *ngIf='!isOrganisation' [(data)]='data.individual' (isValid)="setChildValidationStatus(false,$event)">
+        <individual-representative-details
+                *ngIf='!isOrganisation()'
+                [readOnly]='data.readOnly'
+                [showDob]='data.showDob'
+                [(data)]='data.individual'
+                (isValid)="emitIndividualValidStatus($event)">
         </individual-representative-details>
 
-        <organisation-representative-details *ngIf='isOrganisation' [(data)]='data.organisation' (isValid)="setChildValidationStatus(true,$event)">
+        <organisation-representative-details
+                *ngIf='isOrganisation()'
+                [readOnly]='data.readOnly'
+                [(data)]='data.organisation'
+                (isValid)="emitOrganisationValidStatus($event)">
         </organisation-representative-details>
 
     </div>
+
+    <br/>
 
 </div>

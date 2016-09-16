@@ -9,7 +9,7 @@ import {PartyModel, IParty} from '../models/party.model';
 // todo add data security
 export class RoleController {
 
-    private searchByIdentity = async(req:Request, res:Response) => {
+    private searchByIdentity = async(req: Request, res: Response) => {
         const schema = {
             'identity_id': {
                 in: 'params',
@@ -36,7 +36,7 @@ export class RoleController {
         };
         const filterParams = FilterParams.decode(req.query.filter);
         validateReqSchema(req, schema)
-            .then((req:Request) => RoleModel.searchByIdentity(
+            .then((req: Request) => RoleModel.searchByIdentity(
                 req.params.identity_id,
                 filterParams.get('roleType'),
                 filterParams.get('status'),
@@ -50,7 +50,7 @@ export class RoleController {
             .catch(sendError(res));
     };
 
-    private findByIdentifier = async(req:Request, res:Response) => {
+    private findByIdentifier = async(req: Request, res: Response) => {
         const schema = {
             'identifier': {
                 in: 'params',
@@ -59,14 +59,14 @@ export class RoleController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RoleModel.findByIdentifier(req.params.identifier))
+            .then((req: Request) => RoleModel.findByIdentifier(req.params.identifier))
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private create = async(req:Request, res:Response) => {
+    private create = async(req: Request, res: Response) => {
         const schema = {
             'roleType.value.code': {
                 in: 'body',
@@ -80,15 +80,14 @@ export class RoleController {
             }
         };
         validateReqSchema(req, schema)
-            .then(async (req: Request) => {
+            .then(async(req: Request) => {
                 const idValue = Url.lastPathElement(req.body.party.href);
                 if (!idValue) {
                     console.log('Id value not found from party href', req.body.party.href);
                     throw new Error('400');
                 }
                 const myPrincipal = context.getAuthenticatedPrincipal();
-                const myIdentity = context.getAuthenticatedIdentity();
-                const hasAccess = await PartyModel.hasAccess(idValue, myPrincipal, myIdentity);
+                const hasAccess = await PartyModel.hasAccess(idValue, myPrincipal);
                 if (!hasAccess) {
                     console.log('Identity access denied or does not exist', idValue);
                     throw new Error('403');
@@ -100,7 +99,7 @@ export class RoleController {
                 }
                 return party;
             })
-            .then((party:IParty) => {
+            .then((party: IParty) => {
                 const agencyUser = context.getAuthenticatedAgencyUser();
                 return party.addOrModifyRole(req.body, agencyUser);
             })
@@ -110,7 +109,7 @@ export class RoleController {
             .catch(sendError(res));
     };
 
-    private modify = async(req:Request, res:Response) => {
+    private modify = async(req: Request, res: Response) => {
         const schema = {
             'roleType.href': {
                 in: 'body',
@@ -124,15 +123,14 @@ export class RoleController {
             }
         };
         validateReqSchema(req, schema)
-            .then(async (req: Request) => {
+            .then(async(req: Request) => {
                 const idValue = Url.lastPathElement(req.body.party.href);
                 if (!idValue) {
                     console.log('Id value not found from party href', req.body.party.href);
                     throw new Error('400');
                 }
                 const myPrincipal = context.getAuthenticatedPrincipal();
-                const myIdentity = context.getAuthenticatedIdentity();
-                const hasAccess = await PartyModel.hasAccess(idValue, myPrincipal, myIdentity);
+                const hasAccess = await PartyModel.hasAccess(idValue, myPrincipal);
                 if (!hasAccess) {
                     console.log('Identity access denied or does not exist', idValue);
                     throw new Error('403');
@@ -144,7 +142,7 @@ export class RoleController {
                 }
                 return party;
             })
-            .then((party:IParty) => {
+            .then((party: IParty) => {
                 return party.modifyRole(req.body);
             })
             .then((model) => model ? model.toDTO() : null)
@@ -153,17 +151,17 @@ export class RoleController {
             .catch(sendError(res));
     };
 
-    private listStatuses = (req:Request, res:Response) => {
+    private listStatuses = (req: Request, res: Response) => {
         const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => RoleStatus.values() as RoleStatus[])
+            .then((req: Request) => RoleStatus.values() as RoleStatus[])
             .then((results) => results ? results.map((model) => model.toHrefValue(true)) : null)
             .then(sendList(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    public assignRoutes = (router:Router) => {
+    public assignRoutes = (router: Router) => {
 
         router.get('/v1/roles/identity/:identity_id',
             context.begin,

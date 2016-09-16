@@ -44,4 +44,18 @@ describe('Util tests', () => {
 
     });
 
+    it('says today is not in the future', async(done) => {
+
+        try {
+            const now = new Date();
+            expect(Utils.dateIsTodayOrInFuture(now)).toBe(true);
+            expect(Utils.dateIsInFuture(now)).toBe(false);
+        } catch (e) {
+            fail(e);
+        }
+
+        done();
+
+    });
+
 });

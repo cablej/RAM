@@ -6,7 +6,7 @@
 
     <div class="panel panel-default">
         <div class="panel-heading">
-            <h4>Add notification</h4>
+            <h4><span class="badge square">1</span> {{'editNotification.providerDetails.header' | translate}}</h4>
         </div>
         <div class="panel-body">
             <div class="col-md-12">
@@ -51,9 +51,10 @@
     </div>
 
     <div *ngIf="delegateParty && delegateIdentityRef">
+
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4>Notification Details</h4>
+                <h4><span class="badge square">2</span> {{'editNotification.notificationDetails.header' | translate}}</h4>
             </div>
             <div class="panel-body">
                 <div class="col-md-12">
@@ -72,12 +73,14 @@
                             (click)="removeSSID()">Remove</button>
                 </div>
                 <div>
-                    <access-period [(data)]='accessPeriod' (isValid)='accessPeriodIsValid=$event'>
+                    <access-period [(data)]='accessPeriod'
+                                   [originalStartDate]='originalStartDate'
+                                   (isValid)='accessPeriodIsValid=$event'>
                     </access-period>
                 </div>
                 <br style="clear: both"/>
-                <hr/>
                 <div class="col-md-12">
+                    <hr/>
                     <h4>Set the agencies to notify:</h4>
                     <table class="table table-hover checkbox-table">
                         <tbody>
@@ -104,29 +107,30 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4>Declaration</h4>
+                <h4><span class="badge square">3</span> {{'editNotification.declaration.header' | translate}}</h4>
             </div>
             <div class="panel-body">
                 <div class="col-md-12">
-                    <ng2-markdown [markdown]="declarationText"></ng2-markdown>
-                    <div class="checkbox ">
+                    <h4>By authorising the nominated representative to act on behalf of the selected
+                        {{services.model.partyTypeLabelForParty(relationship.subject)}}, it is acknowledged that
+                        they will be able to perform all of the selected transactions on their behalf.</h4>
+                    <blockquote><ng2-markdown [markdown]="declarationText"></ng2-markdown></blockquote>
+                    <div class="checkbox">
                         <label><input type="checkbox" [formControl]='form.controls["accepted"]'> <strong>I agree to this declaration</strong></label>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
 </form>
 
-<br/>
-<br/>
-
 <div id="action-button-bar">
     <div class="pull-left">
-        <a class="btn btn-default align-center" (click)="back()">← Back</a>
+        <button class="btn btn-default align-center" (click)="back()">← {{'back' | translate}}</button>
     </div>
     <div class="pull-right">
-        <a class="btn btn-primary align-center" (click)="save()">Save →</a>
+        <button class="btn btn-primary align-center" (click)="save()">{{'save' | translate}} →</button>
     </div>
 </div>

@@ -1,22 +1,17 @@
 import {Router, Request, Response} from 'express';
 import {context} from '../providers/context.provider';
 import {
+    sendHtml,
     sendResource,
     sendList,
     sendSearchResult,
     sendError,
     sendNotFoundError,
-    validateReqSchema,
-    REGULAR_CHARS
+    validateReqSchema
 } from './helpers';
 import {PartyModel} from '../models/party.model';
 import {RelationshipStatus, RelationshipModel} from '../models/relationship.model';
-import {
-    FilterParams,
-    IInvitationCodeRelationshipAddDTO,
-    ICreateInvitationCodeDTO,
-    IAttributeDTO
-} from '../../../commons/api';
+import {Relationship as DTO, FilterParams} from '../../../commons/api';
 import {Headers} from './headers';
 
 // todo add data security
@@ -25,7 +20,7 @@ export class RelationshipController {
     constructor() {
     }
 
-    private findByIdentifier = async(req:Request, res:Response) => {
+    private findByIdentifier = async(req: Request, res: Response) => {
         const schema = {
             'identifier': {
                 in: 'params',
@@ -34,14 +29,14 @@ export class RelationshipController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.findByIdentifier(req.params.identifier))
-            .then((model) => model ? model.toDTO(null) : null)
+            .then((req: Request) => RelationshipModel.findByIdentifier(req.params.identifier))
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private findByInvitationCode = async(req:Request, res:Response) => {
+    private findByInvitationCode = async(req: Request, res: Response) => {
         const schema = {
             'invitationCode': {
                 notEmpty: true,
@@ -50,14 +45,31 @@ export class RelationshipController {
         };
         const invitationCode = req.params.invitationCode;
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.findByInvitationCode(invitationCode))
-            .then((model) => model ? model.toDTO(invitationCode) : null)
+            .then((req: Request) => RelationshipModel.findByInvitationCode(invitationCode))
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private claimByInvitationCode = async(req:Request, res:Response) => {
+    private printByInvitationCode = async(req: Request, res: Response) => {
+        const schema = {
+            'invitationCode': {
+                in: 'params',
+                notEmpty: true,
+                errorMessage: 'Identifier is not valid'
+            }
+        };
+        const invitationCode = req.params.invitationCode;
+        validateReqSchema(req, schema)
+            .then((req: Request) => RelationshipModel.findByInvitationCode(invitationCode))
+            .then((model) => model ? model.toDTO() : null)
+            .then(sendHtml(res, 'relationship-invitation.html'))
+            .then(sendNotFoundError(res))
+            .catch(sendError(res));
+    };
+
+    private claimByInvitationCode = async(req: Request, res: Response) => {
         const schema = {
             'invitationCode': {
                 notEmpty: true,
@@ -66,15 +78,15 @@ export class RelationshipController {
         };
         const invitationCode = req.params.invitationCode;
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.findByInvitationCode(invitationCode))
+            .then((req: Request) => RelationshipModel.findByInvitationCode(invitationCode))
             .then((model) => model ? model.claimPendingInvitation(context.getAuthenticatedIdentity(), invitationCode) : null)
-            .then((model) => model ? model.toDTO(invitationCode) : null)
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private acceptByInvitationCode = async(req:Request, res:Response) => {
+    private acceptByInvitationCode = async(req: Request, res: Response) => {
         const schema = {
             'invitationCode': {
                 notEmpty: true,
@@ -82,15 +94,15 @@ export class RelationshipController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.findByInvitationCode(req.params.invitationCode))
+            .then((req: Request) => RelationshipModel.findByInvitationCode(req.params.invitationCode))
             .then((model) => model ? model.acceptPendingInvitation(context.getAuthenticatedIdentity()) : null)
-            .then((model) => model ? model.toDTO(null) : null)
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private rejectByInvitationCode = async(req:Request, res:Response) => {
+    private rejectByInvitationCode = async(req: Request, res: Response) => {
         const schema = {
             'invitationCode': {
                 notEmpty: true,
@@ -98,7 +110,7 @@ export class RelationshipController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.findByInvitationCode(req.params.invitationCode))
+            .then((req: Request) => RelationshipModel.findByInvitationCode(req.params.invitationCode))
             .then((model) => model ? model.rejectPendingInvitation(context.getAuthenticatedIdentity()) : null)
             .then((model) => model ? Promise.resolve({}) : null)
             .then(sendResource(res))
@@ -106,7 +118,7 @@ export class RelationshipController {
             .catch(sendError(res));
     };
 
-    private notifyDelegateByInvitationCode = async(req:Request, res:Response) => {
+    private notifyDelegateByInvitationCode = async(req: Request, res: Response) => {
         const schema = {
             'invitationCode': {
                 notEmpty: true,
@@ -123,9 +135,9 @@ export class RelationshipController {
         };
 
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.findPendingByInvitationCodeInDateRange(req.params.invitationCode, new Date()))
+            .then((req: Request) => RelationshipModel.findPendingByInvitationCodeInDateRange(req.params.invitationCode, new Date()))
             .then((model) => model ? model.notifyDelegate(req.body.email, context.getAuthenticatedIdentity()) : null)
-            .then((model) => model ? model.toDTO(null) : null)
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
@@ -133,7 +145,7 @@ export class RelationshipController {
 
     /* tslint:disable:max-func-body-length */
     // todo this search might no longer be useful from SS2
-    private searchBySubjectOrDelegate = async(req:Request, res:Response) => {
+    private searchBySubjectOrDelegate = async(req: Request, res: Response) => {
         const schema = {
             'subject_or_delegate': {
                 in: 'params',
@@ -165,7 +177,7 @@ export class RelationshipController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipModel.search(
+            .then((req: Request) => RelationshipModel.search(
                 req.params.subject_or_delegate === 'subject' ? req.params.identity_id : null,
                 req.params.subject_or_delegate === 'delegate' ? req.params.identity_id : null,
                 parseInt(req.query.page),
@@ -178,7 +190,7 @@ export class RelationshipController {
     };
 
     /* tslint:disable:max-func-body-length */
-    private searchByIdentity = async(req:Request, res:Response) => {
+    private searchByIdentity = async(req: Request, res: Response) => {
         const schema = {
             'identity_id': {
                 in: 'params',
@@ -205,16 +217,15 @@ export class RelationshipController {
         };
         const filterParams = FilterParams.decode(req.query.filter);
         validateReqSchema(req, schema)
-            .then(async (req:Request) => {
+            .then(async(req: Request) => {
                 const myPrincipal = context.getAuthenticatedPrincipal();
-                const myIdentity = context.getAuthenticatedIdentity();
-                const hasAccess = await PartyModel.hasAccess(req.params.identity_id, myPrincipal, myIdentity);
+                const hasAccess = await PartyModel.hasAccess(req.params.identity_id, myPrincipal);
                 if (!hasAccess) {
                     throw new Error('403');
                 }
                 return req;
             })
-            .then((req:Request) => RelationshipModel.searchByIdentity(
+            .then((req: Request) => RelationshipModel.searchByIdentity(
                 req.params.identity_id,
                 filterParams.get('partyType'),
                 filterParams.get('relationshipType'),
@@ -233,7 +244,7 @@ export class RelationshipController {
             .catch(sendError(res));
     };
 
-    private searchDistinctSubjectsForMe = async (req:Request, res:Response) => {
+    private searchDistinctSubjectsForMe = async(req: Request, res: Response) => {
         const schema = {
             'filter': {
                 in: 'query'
@@ -276,115 +287,7 @@ export class RelationshipController {
             .catch(sendError(res));
     };
 
-    private createUsingInvitation = async(req:Request, res:Response) => {
-        // TODO support other party types - currently only INDIVIDUAL is supported here
-        // TODO how much of this validation should be in the data layer?
-        // TODO decide how to handle dates - should they include time? or should server just use 12am AEST
-        const schemaB2I = {
-            'relationshipType': {
-                in: 'body',
-                notEmpty: true,
-                errorMessage: 'Relationship type is not valid'
-            },
-            'subjectIdValue': {
-                in: 'body',
-                notEmpty: true,
-                errorMessage: 'Subject is not valid'
-            },
-            'startTimestamp': {
-                in: 'body',
-                notEmpty: true,
-                isDate: {
-                    errorMessage: 'Start timestamp is not valid'
-                },
-                errorMessage: 'Start timestamp is not valid'
-            },
-            'endTimestamp': {
-                in: 'body'
-            },
-            'delegate.partyType': {
-                in: 'body',
-                matches: {
-                    options: ['^(INDIVIDUAL)$'],
-                    errorMessage: 'Delegate Party Type is not valid'
-                }
-            },
-            'delegate.givenName': {
-                in: 'body',
-                notEmpty: true,
-                isLength: {
-                    options: [{min: 1, max: 200}],
-                    errorMessage: 'Delegate Given Name must be between 1 and 200 chars long'
-                },
-                matches: {
-                    options: [REGULAR_CHARS],
-                    errorMessage: 'Delegate Given Name contains illegal characters'
-                },
-                errorMessage: 'Delegate Given Name is not valid'
-            },
-            'delegate.familyName': {
-                in: 'body',
-                optional: true,
-                isLength: {
-                    options: [{min: 0, max: 200}],
-                    errorMessage: 'Delegate Family Name must be between 0 and 200 chars long'
-                },
-                matches: {
-                    options: [REGULAR_CHARS],
-                    errorMessage: 'Delegate Family Name contains illegal characters'
-                },
-                errorMessage: 'Delegate Family Name is not valid'
-            },
-            'delegate.sharedSecretTypeCode': {
-                in: 'body',
-                notEmpty: true,
-                matches: {
-                    options: ['^(DATE_OF_BIRTH)$'],
-                    errorMessage: 'Delegate Shared Secret Type Code is not valid'
-                }
-            },
-            'delegate.sharedSecretValue': {
-                in: 'body'
-            }
-        };
-
-        validateReqSchema(req, schemaB2I)
-            .then((req: Request) => {
-                return PartyModel.findByIdentityIdValue(req.body.subjectIdValue);
-            })
-            .then((subjectParty) => {
-
-                const delegateIdentity: ICreateInvitationCodeDTO = {
-                    givenName: req.body.delegate.givenName,
-                    familyName: req.body.delegate.familyName,
-                    sharedSecretValue: req.body.delegate.sharedSecretValue
-                };
-
-                const attributes: IAttributeDTO[] = [];
-                for (let attribute of req.body.attributes) {
-                    attributes.push({
-                        code: attribute.code,
-                        value: attribute.value
-                    });
-                }
-
-                const relationshipAddDTO: IInvitationCodeRelationshipAddDTO = {
-                    relationshipType: req.body.relationshipType,
-                    subjectIdValue: req.body.subjectIdValue,
-                    delegate: delegateIdentity,
-                    startTimestamp: req.body.startTimestamp ? new Date(req.body.startTimestamp) : undefined,
-                    endTimestamp: req.body.endTimestamp ? new Date(req.body.endTimestamp) : undefined,
-                    attributes: attributes
-                };
-                return subjectParty.addRelationship(relationshipAddDTO);
-            })
-            .then((model) => model ? model.toDTO(null) : null)
-            .then(sendResource(res))
-            .then(sendNotFoundError(res))
-            .catch(sendError(res));
-    };
-
-    private create = async(req:Request, res:Response) => {
+    private create = async(req: Request, res: Response) => {
         const schema = {
             'relationshipType.href': {
                 in: 'body',
@@ -403,14 +306,14 @@ export class RelationshipController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req: Request) => RelationshipModel.addOrModify(req.params.identifier, req.body))
-            .then((model) => model ? model.toDTO(null) : null)
+            .then((req: Request) => RelationshipModel.createFromDto(DTO.build(req.body) as DTO))
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private modify = async(req:Request, res:Response) => {
+    private modify = async(req: Request, res: Response) => {
         const schema = {
             'identifier': {
                 in: 'params',
@@ -441,22 +344,19 @@ export class RelationshipController {
             'startTimestamp': {
                 in: 'body',
                 notEmpty: true,
-                // isDate: {
-                //     errorMessage: 'Start timestamp is not valid'
-                // },
-                // todo resolve issue
                 errorMessage: 'Start timestamp is not valid'
             }
         };
         validateReqSchema(req, schema)
-            .then((req: Request) => RelationshipModel.addOrModify(req.params.identifier, req.body))
-            .then((model) => model ? model.toDTO(null) : null)
+            .then((req: Request) => RelationshipModel.findByIdentifier(req.params.identifier))
+            .then((model) => model ? model.modify(DTO.build(req.body) as DTO) : null)
+            .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private findStatusByCode = (req:Request, res:Response) => {
+    private findStatusByCode = (req: Request, res: Response) => {
         const schema = {
             'code': {
                 in: 'params',
@@ -465,24 +365,24 @@ export class RelationshipController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipStatus.valueOf(req.params.code) as RelationshipStatus)
+            .then((req: Request) => RelationshipStatus.valueOf(req.params.code) as RelationshipStatus)
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch((err) => sendError(res)(err));
     };
 
-    private listStatuses = (req:Request, res:Response) => {
+    private listStatuses = (req: Request, res: Response) => {
         const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipStatus.values() as RelationshipStatus[])
+            .then((req: Request) => RelationshipStatus.values() as RelationshipStatus[])
             .then((results) => results ? results.map((model) => model.toHrefValue(true)) : null)
             .then(sendList(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    public assignRoutes = (router:Router) => {
+    public assignRoutes = (router: Router) => {
 
         router.get('/v1/relationship/:identifier',
             context.begin,
@@ -493,6 +393,11 @@ export class RelationshipController {
             context.begin,
             context.isAuthenticated,
             this.findByInvitationCode);
+
+        router.get('/v1/relationship/invitationCode/:invitationCode/print',
+            context.begin,
+            context.isAuthenticated,
+            this.printByInvitationCode);
 
         router.post('/v1/relationship/invitationCode/:invitationCode/claim',
             context.begin,
@@ -528,11 +433,6 @@ export class RelationshipController {
             context.begin,
             context.isAuthenticated,
             this.searchByIdentity);
-
-        router.post('/v1/relationship-by-invitation',
-            context.begin,
-            context.isAuthenticated,
-            this.createUsingInvitation);
 
         router.post('/v1/relationship',
             context.begin,

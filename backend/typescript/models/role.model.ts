@@ -13,6 +13,9 @@ import {
     SearchResult
 } from '../../../commons/api';
 import {logger} from '../logger';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {Permissions} from '../../../commons/dtos/permission.dto';
 
 const MAX_PAGE_SIZE = 10;
 
@@ -235,6 +238,10 @@ class Role extends RAMObject implements IRole {
         return agencyServiceAttributes;
     }
 
+    public async getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.role, PermissionEnforcers.role);
+    }
+
     public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
         return new HrefValue(
             await Url.forRole(this),
@@ -276,11 +283,11 @@ export class RoleModel {
     }
 
     public static async add(roleType: IRoleType,
-                     party: IParty,
-                     startTimestamp: Date,
-                     endTimestamp: Date,
-                     roleStatus: RoleStatus,
-                     attributes: IRoleAttribute[]): Promise<IRole> {
+                            party: IParty,
+                            startTimestamp: Date,
+                            endTimestamp: Date,
+                            roleStatus: RoleStatus,
+                            attributes: IRoleAttribute[]): Promise<IRole> {
         return await RoleMongooseModel.create({
             roleType: roleType,
             party: party,
@@ -291,7 +298,7 @@ export class RoleModel {
         });
     }
 
-    public static findByIdentifier(id: string): Promise<IRole> {
+    public static async findByIdentifier(id: string): Promise<IRole> {
         // TODO migrate from _id to another id
         return RoleMongooseModel
             .findOne({
@@ -305,7 +312,7 @@ export class RoleModel {
             .exec();
     }
 
-    public static findByRoleTypeAndParty(roleType: IRoleType, party: IParty): Promise<IRole> {
+    public static async findByRoleTypeAndParty(roleType: IRoleType, party: IParty): Promise<IRole> {
         return RoleMongooseModel
             .findOne({
                 roleType: roleType,
@@ -319,12 +326,12 @@ export class RoleModel {
             .exec();
     }
 
-    public static searchByIdentity(identityIdValue: string,
-                            roleType: string,
-                            status: string,
-                            inDateRange: boolean,
-                            page: number,
-                            reqPageSize: number): Promise<SearchResult<IRole>> {
+    public static async searchByIdentity(identityIdValue: string,
+                                   roleType: string,
+                                   status: string,
+                                   inDateRange: boolean,
+                                   page: number,
+                                   reqPageSize: number): Promise<SearchResult<IRole>> {
         return new Promise<SearchResult<IRole>>(async(resolve, reject) => {
             const pageSize: number = reqPageSize ? Math.min(reqPageSize, MAX_PAGE_SIZE) : MAX_PAGE_SIZE;
             try {
@@ -367,8 +374,8 @@ export class RoleModel {
     }
 
     public static async findActiveByIdentityInDateRange(identityIdValue: string,
-                                                 roleType: string,
-                                                 date: Date): Promise<IRole> {
+                                                        roleType: string,
+                                                        date: Date): Promise<IRole> {
         const party = await PartyModel.findByIdentityIdValue(identityIdValue);
         return RoleMongooseModel
             .findOne({

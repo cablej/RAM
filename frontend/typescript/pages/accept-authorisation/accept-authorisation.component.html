@@ -1,31 +1,32 @@
 <page-header [identity]="identity"
              tab="GET_AUTHORISATION"
-             [messages]="globalMessages"
-             [giveAuthorisationsEnabled]="giveAuthorisationsEnabled"></page-header>
+             [messages]="globalMessages"></page-header>
 
 <div class="panel panel-default">
     <div class="panel-heading">
         <h4><span class="badge square">1</span> Representative details</h4>
     </div>
     <div class="panel-body">
-        <!--<h4><b>{{displayName((relationship$ | async)?.delegateNickName)}}</b> has been authorised to-->
-        <!--act on behalf of <b>{{displayName((relationship$ | async)?.subjectNickName)}}</b>.</h4>-->
-        <h4>You have been authorised to act on behalf of <b>{{services.model.displayName((relationship$ | async)?.subjectNickName)}}</b>.
-            Check to see if the following details are correct before accepting the authorisation request.</h4>
-        <div class="row">
-            <div class="col-lg-2">
-                <h4>Given name</h4>
+        <div class="col-md-12">
+            <!--<h4><b>{{displayName((relationship$ | async)?.delegateNickName)}}</b> has been authorised to-->
+            <!--act on behalf of <b>{{displayName((relationship$ | async)?.subjectNickName)}}</b>.</h4>-->
+            <h4>You have been authorised to act on behalf of <b>{{services.model.displayName((relationship$ | async)?.subjectNickName)}}</b>.
+                Check to see if the following details are correct before accepting the authorisation request.</h4>
+            <div class="row">
+                <div class="col-lg-2">
+                    <h4>Given name</h4>
+                </div>
+                <div class="col-lg-10">
+                    <h4>{{(relationship$ | async)?.delegateNickName?.givenName}}</h4>
+                </div>
             </div>
-            <div class="col-lg-10">
-                <h4>{{(relationship$ | async)?.delegateNickName?.givenName}}</h4>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-2">
-                <h4>Family name</h4>
-            </div>
-            <div class="col-lg-10">
-                <h4>{{(relationship$ | async)?.delegateNickName?.familyName}}</h4>
+            <div class="row">
+                <div class="col-lg-2">
+                    <h4>Family name</h4>
+                </div>
+                <div class="col-lg-10">
+                    <h4>{{(relationship$ | async)?.delegateNickName?.familyName}}</h4>
+                </div>
             </div>
         </div>
     </div>
@@ -36,29 +37,23 @@
         <h4><span class="badge square">2</span> Authorisation type</h4>
     </div>
     <div class="panel-body">
-        <h4>You have been setup to be a <b>{{(relationshipType$ | async)?.shortDecodeText}}</b> for this subject.</h4>
+        <div class="col-md-12">
+            <h4>You have been setup to be a <b>{{(relationshipType$ | async)?.shortDecodeText}}</b> for this subject.</h4>
+        </div>
     </div>
 </div>
 
 <div class="panel panel-default">
     <div class="panel-heading">
-        <h4><span class="badge square">3</span> Access period</h4>
+        <h4><span class="badge square">3</span> Authorisation management</h4>
     </div>
     <div class="panel-body">
-        <h4>You will be able to act on behalf of the subject for the period:</h4>
-        <div class="row">
-            <div class="col-lg-2">
-                <h4>Start time</h4>
-            </div>
-            <div class="col-lg-3">
-                <h4>{{services.model.displayDate((relationship$ | async)?.startTimestamp)}}</h4>
-            </div>
-            <div class="col-lg-2">
-                <h4>End time</h4>
-            </div>
-            <div class="col-lg-3">
-                <h4>{{services.model.displayDate((relationship$ | async)?.endTimestamp)}}</h4>
-            </div>
+        <div class="col-md-12">
+            <h4 *ngIf="isManageAuthorisationAllowed()">
+                You <b>will be able</b> to manage authorisations for this subject.</h4>
+            <h4 *ngIf="!isManageAuthorisationAllowed()">
+                You <b>will NOT be</b> able to manage authorisations for this subject.</h4>
+            <p>{{delegateManageAuthorisationAllowedIndAttribute?.attributeName?.value?.longDecodeText}}</p>
         </div>
     </div>
 </div>
@@ -68,33 +63,51 @@
         <h4><span class="badge square">4</span> Online government agency services access level settings</h4>
     </div>
     <div class="panel-body">
-        <h4>NOT IN SCOPE</h4>
+        <div class="col-md-12">
+            <h4 class="todo">NOT IN SCOPE</h4>
+        </div>
     </div>
 </div>
 
 <div class="panel panel-default">
     <div class="panel-heading">
-        <h4><span class="badge square">5</span> Authorisation management</h4>
+        <h4><span class="badge square">5</span> Access period</h4>
     </div>
     <div class="panel-body">
-        <h4 *ngIf="isManageAuthorisationAllowed()">
-            You <b>will be able</b> to manage authorisations for this subject.</h4>
-        <h4 *ngIf="!isManageAuthorisationAllowed()">
-            You <b>will NOT be</b> able to manage authorisations for this subject.</h4>
-        {{delegateManageAuthorisationAllowedIndAttribute?.attributeName?.value?.longDecodeText}}
+        <div class="col-md-12">
+            <h4>You will be able to act on behalf of the subject for the period:</h4>
+            <div class="row">
+                <div class="col-lg-2">
+                    <h4>Start time</h4>
+                </div>
+                <div class="col-lg-3">
+                    <h4>{{services.model.displayDate((relationship$ | async)?.startTimestamp)}}</h4>
+                </div>
+                <div class="col-lg-2">
+                    <h4>End time</h4>
+                </div>
+                <div class="col-lg-3">
+                    <h4>{{services.model.displayDate((relationship$ | async)?.endTimestamp)}}</h4>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
 
 <div class="panel panel-default">
     <div class="panel-heading">
         <h4><span class="badge square">6</span> Declaration</h4>
     </div>
     <div class="panel-body">
-        <h4>By accepting to act on behalf of <b>{{services.model.displayName((relationship$ | async)?.subjectNickName)}}</b>,
-            you acknowledge that:</h4>
-        <div class="todo">TODO {{delegateRelationshipTypeDeclarationAttributeUsage?.defaultValue}}</div>
-        <ng2-markdown [markdown]="delegateRelationshipTypeDeclarationAttributeUsage?.defaultValue"></ng2-markdown>
-        <label><h4><input type="checkbox" [(ngModel)]="accept" [disabled]="!canAccept"> I accept</h4></label>
+        <div class="col-md-12">
+            <h4>By accepting to act on behalf of <b>{{services.model.displayName((relationship$ | async)?.subjectNickName)}}</b>,
+                you acknowledge that:</h4>
+            <blockquote><ng2-markdown [markdown]="delegateRelationshipTypeDeclarationAttributeUsage?.defaultValue"></ng2-markdown></blockquote>
+            <div class="checkbox">
+                <label><input type="checkbox" [(ngModel)]="accept" [disabled]="!canAccept"> <strong>I accept this relationship</strong></label>
+            </div>
+        </div>
     </div>
 </div>
 

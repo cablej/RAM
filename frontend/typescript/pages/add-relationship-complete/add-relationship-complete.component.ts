@@ -6,9 +6,10 @@ import {AbstractPageComponent} from '../abstract-page/abstract-page.component';
 import {PageHeaderAuthComponent} from '../../components/page-header/page-header-auth.component';
 import {RAMNgValidators} from '../../commons/ram-ng-validators';
 import {RAMServices} from '../../services/ram-services';
-import {RAMConstants} from '../../services/ram-constants.service';
+import {Constants} from '../../../../commons/constants';
 
-import {IIdentity, INotifyDelegateDTO} from '../../../../commons/api';
+import {IIdentity, IRelationship, INotifyDelegateDTO} from '../../../../commons/api';
+import {RelationshipCanNotifyDelegatePermission} from '../../../../commons/permissions/relationshipPermission.templates';
 
 @Component({
     selector: 'add-relationship-complete',
@@ -17,15 +18,15 @@ import {IIdentity, INotifyDelegateDTO} from '../../../../commons/api';
     providers: []
 })
 
-// todo display name shouldn't be sent through in the path, should be obtained from the details associated with the invitation code
 export class AddRelationshipCompleteComponent extends AbstractPageComponent {
 
-    public idValue: string;
-    public code: string;
+    public identityHref: string;
+    public relationshipHref: string;
     public displayName: string;
+    public code: string;
 
-    public giveAuthorisationsEnabled: boolean = true; // todo need to set this
     public identity: IIdentity;
+    public relationship: IRelationship;
 
     public form: FormGroup;
     public formUdn: FormGroup;
@@ -38,24 +39,37 @@ export class AddRelationshipCompleteComponent extends AbstractPageComponent {
     public onInit(params: {path: Params, query: Params}) {
 
         // extract path and query parameters
-        this.idValue = params.path['idValue'];
-        this.code = params.path['invitationCode'];
-        this.displayName = params.path['displayName'];
-
-        // identity in focus
-        this.services.rest.findIdentityByValue(this.idValue).subscribe((identity) => {
-            this.identity = identity;
-        });
+        this.identityHref = params.path['identityHref'];
+        this.relationshipHref = params.path['relationshipHref'];
 
         // forms
-        this.form = this.fb.group({
-            'email': ['', Validators.compose([Validators.required, RAMNgValidators.validateEmailFormat])]
-        });
-        this.formUdn = this.fb.group({
-            'udn': ['']
-        });
-        // 'udn': ['', Validators.compose([Validators.required, RAMNgValidators.validateUDNFormat])]
+        this.form = this.fb.group({'email': ['', Validators.compose([Validators.required, RAMNgValidators.validateEmailFormat])]});
+        this.formUdn = this.fb.group({'udn': ['']});
 
+        // identity in focus
+        this.services.rest.findIdentityByHref(this.identityHref).subscribe({
+            next: this.onFindIdentity.bind(this),
+            error: this.onServerError.bind(this)
+        });
+
+    }
+
+    public onFindIdentity(identity: IIdentity) {
+
+        this.identity = identity;
+
+        // relationship in focus
+        this.services.rest.findRelationshipByHref(this.relationshipHref).subscribe({
+            next: this.onFindRelationship.bind(this),
+            error: this.onServerError.bind(this)
+        });
+
+    }
+
+    public onFindRelationship(relationship: IRelationship) {
+        this.relationship = relationship;
+        this.displayName = relationship.delegateNickName._displayName;
+        this.code = this.relationship.delegate.value.identities[0].value.rawIdValue;
     }
 
     public onSubmitUdn() {
@@ -70,28 +84,43 @@ export class AddRelationshipCompleteComponent extends AbstractPageComponent {
             email: this.form.value.email
         };
 
-        this.services.rest.notifyDelegateByInvitationCode(this.code, notifyDelegateDTO).subscribe((relationship) => {
-            this.services.route.goToRelationshipsPage(
-                this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity),
-                null,
-                1,
-                RAMConstants.GlobalMessage.DELEGATE_NOTIFIED
-            );
-        }, (err) => {
-            const status = err.status;
-            if (status === 404) {
-                this.addGlobalMessage('The code you have entered does not exist or is invalid.');
-            } else {
-                this.addGlobalErrorMessages(err);
-            }
-        });
+        let notifyDelegateHref = this.relationship.getLinkHrefByPermission(RelationshipCanNotifyDelegatePermission);
+        if (notifyDelegateHref) {
+            this.services.rest.notifyDelegateByHref(notifyDelegateHref, notifyDelegateDTO).subscribe({
+                next: this.onNotifyDelegate.bind(this),
+                error: (err) => {
+                    const status = err.status;
+                    if (status === 404) {
+                        this.addGlobalMessage('The code you have entered does not exist or is invalid.');
+                    } else {
+                        this.addGlobalErrorMessages(err);
+                    }
+                }
+            });
+        }
 
         return false;
 
     };
 
+    public onNotifyDelegate(relationship: IRelationship) {
+        this.services.route.goToRelationshipsPage(
+            this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity),
+            null,
+            1,
+            Constants.GlobalMessage.DELEGATE_NOTIFIED
+        );
+    }
+
     public goToRelationshipsPage() {
-        this.services.route.goToRelationshipsPage(this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity));
+        this.services.route.goToRelationshipsPage(this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity));
+    }
+
+    public goToPrintPage() {
+        const printHref = this.services.model.getLinkHrefByType(Constants.Link.PRINT, this.relationship);
+        if (printHref) {
+            window.location.href = printHref;
+        }
     }
 
 }

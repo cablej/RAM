@@ -1,10 +1,12 @@
 import {Builder} from './builder.dto';
-import {ILink, IHasLinks} from './link.dto';
 import {IProfile, Profile} from './profile.dto';
 import {IHrefValue, HrefValue} from './hrefValue.dto';
 import {IParty, Party} from './party.dto';
+import {IResource, Resource} from './resource.dto';
+import {Permissions} from './permission.dto';
+import {PermissionTemplates} from '../permissions/allPermission.templates';
 
-export interface IIdentity extends IHasLinks {
+export interface IIdentity extends IResource {
     idValue: string;
     rawIdValue: string;
     identityType: string;
@@ -23,7 +25,7 @@ export interface IIdentity extends IHasLinks {
     party: IHrefValue<IParty>;
 }
 
-export class Identity implements IIdentity {
+export class Identity extends Resource implements IIdentity {
     public static build(sourceObject: any): IIdentity {
         return new Builder<IIdentity>(sourceObject, this)
             .map('profile', Profile)
@@ -31,7 +33,7 @@ export class Identity implements IIdentity {
             .build();
     }
 
-    constructor(public _links: ILink[],
+    constructor(permissions: Permissions,
                 public idValue: string,
                 public rawIdValue: string,
                 public identityType: string,
@@ -48,5 +50,6 @@ export class Identity implements IIdentity {
                 public linkIdConsumer: string,
                 public profile: Profile,
                 public party: HrefValue<Party>) {
+        super(permissions ? permissions : PermissionTemplates.identity);
     }
 }

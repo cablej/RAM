@@ -3,19 +3,13 @@ import {ICodeDecode, CodeDecode, CodeDecodeSchema, Model} from './base';
 import {Url} from './url';
 import {RoleAttributeNameModel} from './roleAttributeName.model';
 import {IRoleAttributeNameUsage, RoleAttributeNameUsageModel} from './roleAttributeNameUsage.model';
-import {
-    HrefValue,
-    RoleType as DTO,
-    RoleAttributeNameUsage as RoleAttributeNameUsageDTO
-} from '../../../commons/api';
+import {HrefValue, RoleType as DTO, RoleAttributeNameUsage as RoleAttributeNameUsageDTO} from '../../../commons/api';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _RoleAttributeNameModel = RoleAttributeNameModel;
-
-/* tslint:disable:no-unused-variable */
 const _RoleAttributeNameUsageModel = RoleAttributeNameUsageModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -84,7 +78,7 @@ export class RoleTypeModel {
         return RoleTypeMongooseModel.create(source);
     }
 
-    public static findByCodeIgnoringDateRange(code: String): Promise<IRoleType> {
+    public static async findByCodeIgnoringDateRange(code: String): Promise<IRoleType> {
         return RoleTypeMongooseModel
             .findOne({
                 code: code
@@ -95,7 +89,7 @@ export class RoleTypeModel {
             .exec();
     }
 
-    public static findByCodeInDateRange(code: String, date: Date): Promise<IRoleType> {
+    public static async findByCodeInDateRange(code: String, date: Date): Promise<IRoleType> {
         return RoleTypeMongooseModel
             .findOne({
                 code: code,
@@ -108,7 +102,7 @@ export class RoleTypeModel {
             .exec();
     }
 
-    public static listIgnoringDateRange(): Promise<IRoleType[]> {
+    public static async listIgnoringDateRange(): Promise<IRoleType[]> {
         return RoleTypeMongooseModel
             .find({})
             .deepPopulate([
@@ -118,7 +112,7 @@ export class RoleTypeModel {
             .exec();
     }
 
-    public static listInDateRange(date: Date): Promise<IRoleType[]> {
+    public static async listInDateRange(date: Date): Promise<IRoleType[]> {
         return RoleTypeMongooseModel
             .find({
                 startDate: {$lte: date},

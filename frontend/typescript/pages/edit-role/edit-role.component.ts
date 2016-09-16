@@ -8,7 +8,7 @@ import {
     SearchResultPaginationComponent, SearchResultPaginationDelegate
 }
     from '../../components/search-result-pagination/search-result-pagination.component';
-import {RAMConstants} from '../../services/ram-constants.service';
+import {Constants} from '../../../../commons/constants';
 import {RAMServices} from '../../services/ram-services';
 
 import {
@@ -50,7 +50,6 @@ export class EditRoleComponent extends AbstractPageComponent {
 
     public deviceAusKeyRefs: ISearchResult<IHrefValue<IAUSkey>>;
 
-    public giveAuthorisationsEnabled: boolean = true; // todo need to set this
     public me: IPrincipal;
     public identity: IIdentity;
     public role: IRole;
@@ -79,7 +78,7 @@ export class EditRoleComponent extends AbstractPageComponent {
         this.auskeyPage = params.query['auskeyPage'] ? +params.query['auskeyPage'] : 1;
 
         // restrict to device auskeys
-        this.auskeyFilter.add('auskeyType', RAMConstants.AUSkey.DEVICE_TYPE);
+        this.auskeyFilter.add('auskeyType', Constants.AUSkey.DEVICE_TYPE);
 
         this._isLoading = true;
 
@@ -100,7 +99,7 @@ export class EditRoleComponent extends AbstractPageComponent {
         this.auskeyPage = params.query['auskeyPage'] ? +params.query['auskeyPage'] : 1;
 
         // restrict to device auskeys
-        this.auskeyFilter.add('auskeyType', RAMConstants.AUSkey.DEVICE_TYPE);
+        this.auskeyFilter.add('auskeyType', Constants.AUSkey.DEVICE_TYPE);
 
         // me (agency user)
         this.services.rest.findMyPrincipal().subscribe({
@@ -147,7 +146,7 @@ export class EditRoleComponent extends AbstractPageComponent {
 
         this.role = role;
 
-        if (!this.services.model.hasLinkHrefByType(RAMConstants.Link.MODIFY, this.role)) {
+        if (!this.services.model.hasLinkHrefByType(Constants.Link.MODIFY, this.role)) {
             // no modify access
             this.services.route.goToAccessDeniedPage();
         } else {
@@ -198,14 +197,14 @@ export class EditRoleComponent extends AbstractPageComponent {
 
                 // if a role of this type already exists, then edit that otherwise we are adding a new role
                 let filterParams = new FilterParams().add('roleType', roleTypeRef.value.code);
-                const rolesHref = this.services.model.getLinkHrefByType(RAMConstants.Link.ROLE_LIST, this.identity);
+                const rolesHref = this.services.model.getLinkHrefByType(Constants.Link.ROLE_LIST, this.identity);
 
                 this.services.rest.searchRolesByHref(rolesHref, filterParams.encode(), 1)
                     .subscribe((searchResult) => {
                         if (searchResult.totalCount === 1) {
                             this.role = searchResult.list[0].value;
                             this.role.roleType = roleTypeRef;
-                            this.roleHref = this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.role);
+                            this.roleHref = this.services.model.getLinkHrefByType(Constants.Link.SELF, this.role);
 
                             this.setUpForm();
                         }
@@ -254,8 +253,8 @@ export class EditRoleComponent extends AbstractPageComponent {
     }
 
     private setUpForm() {
-        const preferredName = this.services.model.getRoleAttributeValue(this.services.model.getRoleAttribute(this.role, RAMConstants.RoleAttributeNameCode.PREFERRED_NAME, RAMConstants.RoleAttributeNameClassifier.OTHER));
-        const deviceAusKeys = this.services.model.getRoleAttributeValue(this.services.model.getRoleAttribute(this.role, RAMConstants.RoleAttributeNameCode.DEVICE_AUSKEYS, RAMConstants.RoleAttributeNameClassifier.OTHER));
+        const preferredName = this.services.model.getRoleAttributeValue(this.services.model.getRoleAttribute(this.role, Constants.RoleAttributeNameCode.PREFERRED_NAME, Constants.RoleAttributeNameClassifier.OTHER));
+        const deviceAusKeys = this.services.model.getRoleAttributeValue(this.services.model.getRoleAttribute(this.role, Constants.RoleAttributeNameCode.DEVICE_AUSKEYS, Constants.RoleAttributeNameClassifier.OTHER));
         (this.form.controls['preferredName'] as FormControl).updateValue(preferredName);
         (this.form.controls['deviceAusKeys'] as FormControl).updateValue(deviceAusKeys);
         this.updateAgencyServices();
@@ -263,7 +262,7 @@ export class EditRoleComponent extends AbstractPageComponent {
 
     private updateAgencyServices() {
         this.form.controls['agencyServices'].updateValueAndValidity([]);
-        this.assignedAgencyAttributes = this.services.model.getRoleAttributesByClassifier(this.role, RAMConstants.RoleAttributeNameClassifier.AGENCY_SERVICE);
+        this.assignedAgencyAttributes = this.services.model.getRoleAttributesByClassifier(this.role, Constants.RoleAttributeNameClassifier.AGENCY_SERVICE);
         if (this.assignedAgencyAttributes) {
             for (let attr of this.assignedAgencyAttributes) {
                 if (attr.value[0] === 'true') {
@@ -353,8 +352,8 @@ export class EditRoleComponent extends AbstractPageComponent {
         if (validationOk) {
             // let roleTypeRef: IHrefValue<IRoleType> = this.services.model.getRoleTypeRef(this.roleTypeRefs, roleTypeCode);
             let attributes: RoleAttribute[] = [];
-            attributes.push(new RoleAttribute(preferredName, this.services.model.getRoleTypeAttributeNameRef(this.role.roleType, RAMConstants.RoleAttributeNameCode.PREFERRED_NAME)));
-            attributes.push(new RoleAttribute(deviceAusKeys, this.services.model.getRoleTypeAttributeNameRef(this.role.roleType, RAMConstants.RoleAttributeNameCode.DEVICE_AUSKEYS)));
+            attributes.push(new RoleAttribute(preferredName, this.services.model.getRoleTypeAttributeNameRef(this.role.roleType, Constants.RoleAttributeNameCode.PREFERRED_NAME)));
+            attributes.push(new RoleAttribute(deviceAusKeys, this.services.model.getRoleTypeAttributeNameRef(this.role.roleType, Constants.RoleAttributeNameCode.DEVICE_AUSKEYS)));
 
             for (let agencyServiceCode of agencyServiceCodes) {
                 attributes.push(new RoleAttribute(['true'], this.services.model.getRoleTypeAttributeNameRef(this.role.roleType, agencyServiceCode)));
@@ -367,7 +366,7 @@ export class EditRoleComponent extends AbstractPageComponent {
 
                 // insert
 
-                let saveHref = this.services.model.getLinkHrefByType(RAMConstants.Link.ROLE_CREATE, this.identity);
+                let saveHref = this.services.model.getLinkHrefByType(Constants.Link.ROLE_CREATE, this.identity);
                 this.services.rest.insertRoleByHref(saveHref, this.role).subscribe({
                     next: this.onSave.bind(this),
                     error: this.onServerError.bind(this)
@@ -377,7 +376,7 @@ export class EditRoleComponent extends AbstractPageComponent {
 
                 // update
 
-                let saveHref = this.services.model.getLinkHrefByType(RAMConstants.Link.MODIFY, this.role);
+                let saveHref = this.services.model.getLinkHrefByType(Constants.Link.MODIFY, this.role);
                 this.services.rest.updateRoleByHref(saveHref, this.role).subscribe({
                     next: this.onSave.bind(this),
                     error: this.onServerError.bind(this)

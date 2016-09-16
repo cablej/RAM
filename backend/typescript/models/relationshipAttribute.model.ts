@@ -1,18 +1,18 @@
 import * as mongoose from 'mongoose';
 import {RelationshipModel} from './relationship.model';
 import {IRelationshipAttributeName, RelationshipAttributeNameModel} from './relationshipAttributeName.model';
-import {
-    IRelationshipAttribute as DTO
-} from '../../../commons/api';
+import {IRelationshipAttributeNameUsage} from './relationshipAttributeNameUsage.model';
+import {IRelationshipAttribute as DTO} from '../../../commons/api';
 import {IRAMObject, RAMObject, Model} from './base';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _RelationshipModel = RelationshipModel;
-
-/* tslint:disable:no-unused-variable */
 const _RelationshipAttributeNameModel = RelationshipAttributeNameModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -45,8 +45,14 @@ export interface IRelationshipAttribute extends IRAMObject {
 
 export class RelationshipAttribute extends RAMObject implements IRelationshipAttribute {
 
-    public value: string[];
-    public attributeName: IRelationshipAttributeName;
+    // needed for when appliesToInstance is flagged on attribute name and the attribute does not exist in the database
+    constructor(public value: string[], public attributeName: IRelationshipAttributeName) {
+        super(undefined, undefined, undefined, undefined, undefined);
+    }
+
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.relationshipAttribute, PermissionEnforcers.relationshipAttribute);
+    }
 
     public async toDTO(): Promise<DTO> {
         const dto: DTO = {
@@ -68,6 +74,11 @@ export class RelationshipAttributeModel {
 
     public static async create(source: any): Promise<IRelationshipAttribute> {
         return await RelationshipAttributeMongooseModel.create(source);
+    }
+
+    // todo the default value from usage should be changed to string[] in the schema
+    public static createInstance(source: IRelationshipAttributeNameUsage): Promise<IRelationshipAttribute> {
+        return Promise.resolve(new RelationshipAttribute(source.defaultValue ? [source.defaultValue] : [], source.attributeName));
     }
 
     public static async add(value: string[], attributeName: IRelationshipAttributeName): Promise<IRelationshipAttribute> {

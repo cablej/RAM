@@ -101,9 +101,7 @@ class Security {
             if (idValue) {
                 const givenName = this.getValueFromHeaderLocalsOrCookie(req, res, Headers.GivenName);
                 const familyName = this.getValueFromHeaderLocalsOrCookie(req, res, Headers.FamilyName);
-                const displayName = givenName ?
-                    givenName + (familyName ? ' ' + familyName : '') :
-                    (familyName ? familyName : '');
+                const displayName = givenName ? givenName + (familyName ? ' ' + familyName : '') : (familyName ? familyName : '');
                 const programRoles: IAgencyUserProgramRole[] = [];
                 const programRolesRaw = this.getValueFromHeaderLocalsOrCookie(req, res, Headers.AgencyUserProgramRoles);
                 if (programRolesRaw) {

@@ -57,12 +57,11 @@ export class AuskeyController {
         };
         const filterParams = FilterParams.decode(req.query.filter);
         validateReqSchema(req, schema)
-            .then(async (req: Request) => {
+            .then(async(req: Request) => {
                 const idValue = req.params.idValue;
                 const myPrincipal = context.getAuthenticatedPrincipal();
                 if (!myPrincipal.agencyUserInd) {
-                    const myIdentity = context.getAuthenticatedIdentity();
-                    const hasAccess = await PartyModel.hasAccess(idValue, myPrincipal, myIdentity);
+                    const hasAccess = await PartyModel.hasAccess(idValue, myPrincipal);
                     if (!hasAccess) {
                         console.log('Identity access denied or does not exist', idValue);
                         throw new Error('403');

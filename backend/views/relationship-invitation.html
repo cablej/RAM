@@ -1,0 +1,99 @@
+<html>
+
+<head>
+
+    <style type="text/css">
+        html, body { font-family: Arial, sans-serif; font-size: 15px; line-height: 1.5em; margin: 0; padding: 0; }
+        h1, h2, h3, h4 { margin: 1em 0; line-height: 1.3em; }
+        ol { margin: 0 0 0 3em; padding: 0; }
+        li { margin: 0; padding: 0; }
+        .container { display: none; margin: 0 auto; max-width: 1200px; }
+        .container.delegate-is-{{delegate.value.partyType}} { display: block; }
+    </style>
+
+    <style type="text/css" media="print">
+        @page { margin: 0; size: A4; }
+        html, body { width: 210mm; height: 297mm; }
+        body { padding: 20px 50px; }
+        .container { margin: 0; width: 100%; }
+    </style>
+
+</head>
+
+<body>
+
+    <!--ABN Delegate-->
+    <div class="container delegate-is-ABN">
+
+        <h1>RE: Instructions for <b>{{delegateNickName._displayName}}</b> to Accept an Authorisation</h1>
+
+        <p>Your business has been authorised to access and transact with Government business
+            services on behalf of <b>{{subjectNickName._displayName}}</b>.</p>
+
+        <h2>What you need to do</h2>
+
+        <p>You need to accept or decline this authorisation. To do this:</p>
+
+        <ol>
+            <li>Go to authorisationmanager.gov.au</li>
+            <li>sign in with your myGov or AUSkey*</li>
+            <li>Select <b>{{delegateNickName._displayName}}</b> authorisation</li>
+            <li>Click on the pending authorisation for <b>{{subjectNickName._displayName}}</b></li>
+        </ol>
+
+        <p>Important: This code will expire in seven calendar days, if it expires you will
+            need to contact the authorising business to have them issue a new code.</p>
+
+        <ol start="5">
+            <li>Review the request details</li>
+            <li>Select 'Accept' or 'Decline'</li>
+        </ol>
+
+        <div class="footer">
+            <p>* The myGov or AUSkey you use must be linked to <b>{{subjectNickName._displayName}}</b> with administrator level access</b></p>
+        </div>
+
+        <p><b>More information:</b> Visit the abr.gov.au website, selecting <b>Authorisations</b>.</p>
+
+    </div>
+
+    <!--INDIVIDUAL Delegate-->
+    <div class="container delegate-is-INDIVIDUAL">
+
+        <h1>RE: Instructions for <b>{{delegateNickName._displayName}}</b> to Accept an Authorisation</h1>
+
+        <p>You have been authorised to access and transact with Government business
+            services on behalf of <b>{{subjectNickName._displayName}}</b>.</p>
+
+        <h2>What you need to do</h2>
+
+        <p>You need to accept or decline this authorisation. To do this:</p>
+
+        <ol>
+            <li>Go to authorisationmanager.gov.au</li>
+            <li>sign in with your myGov or AUSkey*</li>
+            <li>Select Get authorisation</li>
+            <li>Enter the authorisation code <b>{{delegate.value.identities.0.value.rawIdValue}}</b> and select activate**</li>
+        </ol>
+
+        <p>Important: This code will expire in seven calendar days, if the code expires you will
+            need to contact the authorising business to have them issue a new code.</p>
+
+        <ol start="5">
+            <li>Review the request details</li>
+            <li>Select 'Accept' or 'Decline'</li>
+        </ol>
+
+        <p>More information: Visit the ABR website, selecting Authorisations.</p>
+
+        <div class="footer">
+            <p>* The AUSkey  must be for <b>{{subjectNickName._displayName}}</b></p>
+            <p>** The name on this invitation must match your name on your login</p>
+        </div>
+
+    </div>
+
+
+</body>
+
+</html>

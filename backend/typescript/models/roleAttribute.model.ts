@@ -2,17 +2,16 @@ import * as mongoose from 'mongoose';
 import {RAMSchema, Model, RAMObject, IRAMObject} from './base';
 import {RoleModel} from './role.model';
 import {IRoleAttributeName, RoleAttributeNameModel} from './roleAttributeName.model';
-import {
-    RoleAttribute as DTO
-} from '../../../commons/api';
+import {RoleAttribute as DTO} from '../../../commons/api';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _RoleModel = RoleModel;
-
-/* tslint:disable:no-unused-variable */
 const _RoleAttributeNameModel = RoleAttributeNameModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -47,6 +46,10 @@ export interface IRoleAttribute extends IRAMObject {
 class RoleAttribute extends RAMObject implements IRoleAttribute {
     public value: string[];
     public attributeName: IRoleAttributeName;
+
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.roleAttribute, PermissionEnforcers.roleAttribute);
+    }
 
     public async toDTO(): Promise<DTO> {
         return new DTO(

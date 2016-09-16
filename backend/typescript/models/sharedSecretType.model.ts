@@ -39,7 +39,7 @@ export class SharedSecretTypeModel {
         return SharedSecretTypeMongooseModel.create(source);
     }
 
-    public static findByCodeIgnoringDateRange(code: string): Promise<ISharedSecretType> {
+    public static async findByCodeIgnoringDateRange(code: string): Promise<ISharedSecretType> {
         return SharedSecretTypeMongooseModel
             .findOne({
                 code: code
@@ -47,7 +47,7 @@ export class SharedSecretTypeModel {
             .exec();
     }
 
-    public static findByCodeInDateRange(code: string, date: Date): Promise<ISharedSecretType> {
+    public static async findByCodeInDateRange(code: string, date: Date): Promise<ISharedSecretType> {
         return SharedSecretTypeMongooseModel
             .findOne({
                 code: code,
@@ -57,14 +57,14 @@ export class SharedSecretTypeModel {
             .exec();
     }
 
-    public static listIgnoringDateRange(): Promise<ISharedSecretType[]> {
+    public static async listIgnoringDateRange(): Promise<ISharedSecretType[]> {
         return SharedSecretTypeMongooseModel
             .find({})
             .sort({name: 1})
             .exec();
     }
 
-    public static listInDateRange(date: Date): Promise<ISharedSecretType[]> {
+    public static async listInDateRange(date: Date): Promise<ISharedSecretType[]> {
         return SharedSecretTypeMongooseModel
             .find({
                 startDate: {$lte: date},

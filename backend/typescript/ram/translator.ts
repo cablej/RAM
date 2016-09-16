@@ -1,4 +1,3 @@
-import 'zone.js';
 import 'reflect-metadata';
 import {TranslateService} from 'ng2-translate/ng2-translate';
 import {TranslateUniversalLoader} from '../translateUniversalLoader';

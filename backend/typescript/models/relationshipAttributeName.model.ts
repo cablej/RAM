@@ -32,7 +32,7 @@ export class RelationshipAttributeNameDomain extends RAMEnum {
         RelationshipAttributeNameDomain.SelectMulti
     ];
 
-    constructor(code:string, shortDecodeText:string) {
+    constructor(code: string, shortDecodeText: string) {
         super(code, shortDecodeText);
     }
 }
@@ -49,7 +49,7 @@ export class RelationshipAttributeNameClassifier extends RAMEnum {
         RelationshipAttributeNameClassifier.AgencyService
     ];
 
-    constructor(code:string, shortDecodeText:string) {
+    constructor(code: string, shortDecodeText: string) {
         super(code, shortDecodeText);
     }
 }
@@ -80,7 +80,11 @@ const RelationshipAttributeNameSchema = CodeDecodeSchema({
     },
     permittedValues: [{
         type: String
-    }]
+    }],
+    appliesToInstance: {
+        type: Boolean,
+        required: [true, 'Applies to Instance is required'],
+    }
 });
 
 // instance ...........................................................................................................
@@ -91,9 +95,10 @@ export interface IRelationshipAttributeName extends ICodeDecode {
     category?: string;
     purposeText: string;
     permittedValues: string[];
+    appliesToInstance: boolean;
     domainEnum(): RelationshipAttributeNameDomain;
     isInDateRange(): boolean;
-    toHrefValue(includeValue:boolean): Promise<HrefValue<DTO>>;
+    toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>>;
     toDTO(): Promise<DTO>;
 }
 
@@ -104,6 +109,7 @@ class RelationshipAttributeName extends CodeDecode implements IRelationshipAttri
     public category: string;
     public purposeText: string;
     public permittedValues: string[];
+    public appliesToInstance: boolean;
 
     public domainEnum(): RelationshipAttributeNameDomain {
         return RelationshipAttributeNameDomain.valueOf(this.domain);
@@ -114,7 +120,7 @@ class RelationshipAttributeName extends CodeDecode implements IRelationshipAttri
         return this.startDate <= date && (this.endDate === null || this.endDate === undefined || this.endDate >= date);
     }
 
-    public async toHrefValue(includeValue:boolean): Promise<HrefValue<DTO>> {
+    public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
         return new HrefValue(
             await Url.forRelationshipAttributeName(this),
             includeValue ? await this.toDTO() : undefined
@@ -132,7 +138,8 @@ class RelationshipAttributeName extends CodeDecode implements IRelationshipAttri
             this.domain,
             this.classifier,
             this.category,
-            this.permittedValues
+            this.permittedValues,
+            this.appliesToInstance
         );
     }
 
@@ -149,7 +156,7 @@ export class RelationshipAttributeNameModel {
         return RelationshipAttributeNameMongooseModel.create(source);
     }
 
-    public static findByCodeIgnoringDateRange(code: string): Promise<IRelationshipAttributeName> {
+    public static async findByCodeIgnoringDateRange(code: string): Promise<IRelationshipAttributeName> {
         return RelationshipAttributeNameMongooseModel
             .findOne({
                 code: code
@@ -157,7 +164,7 @@ export class RelationshipAttributeNameModel {
             .exec();
     }
 
-    public static findByCodeInDateRange(code: string, date: Date): Promise<IRelationshipAttributeName> {
+    public static async findByCodeInDateRange(code: string, date: Date): Promise<IRelationshipAttributeName> {
         return RelationshipAttributeNameMongooseModel
             .findOne({
                 code: code,
@@ -167,14 +174,14 @@ export class RelationshipAttributeNameModel {
             .exec();
     }
 
-    public static listIgnoringDateRange(): Promise<IRelationshipAttributeName[]> {
+    public static async listIgnoringDateRange(): Promise<IRelationshipAttributeName[]> {
         return RelationshipAttributeNameMongooseModel
             .find({})
             .sort({name: 1})
             .exec();
     }
 
-    public static listInDateRange(date: Date): Promise<IRelationshipAttributeName[]> {
+    public static async listInDateRange(date: Date): Promise<IRelationshipAttributeName[]> {
         return RelationshipAttributeNameMongooseModel
             .find({
                 startDate: {$lte: date},

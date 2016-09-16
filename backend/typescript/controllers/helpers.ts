@@ -2,8 +2,26 @@ import {logger} from '../logger';
 import {Response, Request} from 'express';
 import {ErrorResponse, SearchResult, HrefValue} from '../../../commons/api';
 import * as _ from 'lodash';
+import * as mu from 'mu2';
+import MappedError = ExpressValidator.MappedError;
 
 export const REGULAR_CHARS = '^([A-Za-z0-9 +&\'\*\-]+)?$';
+
+mu.root = __dirname + '/../../views';
+
+export function sendHtml<T>(res: Response, view: string) {
+    'use strict';
+    return (doc: T): T => {
+        if (doc) {
+            res.status(200);
+            res.setHeader('Content-Type', 'text/html');
+            mu.clearCache(view);
+            let stream = mu.compileAndRender(view, doc);
+            stream.pipe(res);
+        }
+        return doc;
+    };
+}
 
 export function sendResource<T>(res: Response) {
     'use strict';
@@ -19,7 +37,7 @@ export function sendResource<T>(res: Response) {
 
 export function sendList<T extends HrefValue<U>|U, U>(res: Response) {
     'use strict';
-    return async (results: Promise<T>[]): Promise<T[]> => {
+    return async(results: Promise<T>[]): Promise<T[]> => {
         const resolvedResults = await Promise.all<T>(results);
         res.status(200);
         res.setHeader('Content-Type', 'application/json');
@@ -30,7 +48,7 @@ export function sendList<T extends HrefValue<U>|U, U>(res: Response) {
 
 export function sendSearchResult<T extends HrefValue<U>, U>(res: Response) {
     'use strict';
-    return async (results: SearchResult<Promise<T>>): Promise<SearchResult<T>> => {
+    return async(results: SearchResult<Promise<T>>): Promise<SearchResult<T>> => {
         const resolvedResults = new SearchResult<T>(
             results.page,
             results.totalCount,
@@ -48,9 +66,10 @@ export function validateReqSchema<T>(req: Request, schema: Object): Promise<Requ
     'use strict';
     return new Promise<Request>((resolve, reject) => {
         req.check(schema);
-        const errors = req.validationErrors(false) as { msg: string }[];
+        const errors = req.validationErrors(false);
         if (errors) {
-            const errorMsgs = errors.map((e) => e.msg);
+            const errorArray = errors as Array<MappedError>;
+            const errorMsgs = errorArray.map((e) => e.msg);
             reject(errorMsgs);
         } else {
             resolve(req);
@@ -76,6 +95,9 @@ export function sendError<T>(res: Response) {
     'use strict';
     return (error: string | Error | ValidationError | string[]) => {
         logger.error(error.toString());
+        if (error instanceof Error) {
+            logger.error((error as Error).stack);
+        }
         switch (error.constructor.name) {
             case 'Array':
                 res.status(400);
@@ -121,7 +143,6 @@ export function sendError<T>(res: Response) {
                 res.json(new ErrorResponse(error.toString()));
                 break;
         }
-        console.error(new Error().stack);
     };
 }
 

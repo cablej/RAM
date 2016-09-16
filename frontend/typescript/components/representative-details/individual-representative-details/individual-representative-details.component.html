@@ -1,29 +1,38 @@
 <form [formGroup]=form>
-    <div class="form-group">
-        <div class="col-md-4"
-        [class.has-error]="!form.controls['givenName'].valid">
+    <div>
+        <div class="col-md-4" [class.has-error]="!form.controls['givenName'].valid">
             <h4>{{'addRelationship.givenName.label' | translate}}*</h4>
-            <input class="form-control" type="text" name="givenName" [formControl]="form.controls['givenName']"
-                placeholder="{{'addRelationship.givenName.placeholder' | translate}}">
+            <input class="form-control"
+                   type="text"
+                   name="givenName"
+                   [disabled]='isDisabled()'
+                   [formControl]="form.controls['givenName']"
+                   placeholder="{{'addRelationship.givenName.placeholder' | translate}}">
         </div>
-        <div class="col-md-4"
-        [class.has-error]="!form.controls['familyName'].valid">
+        <div class="col-md-4" [class.has-error]="!form.controls['familyName'].valid">
             <h4>{{'addRelationship.familyName.label' | translate}}</h4>
-            <input class="form-control" type="text" name="familyName" [formControl]="form.controls['familyName']"
-                placeholder="{{'addRelationship.familyName.placeholder' | translate}}">
+            <input class="form-control"
+                   type="text"
+                   name="familyName"
+                   [disabled]='isDisabled()'
+                   [formControl]="form.controls['familyName']"
+                   placeholder="{{'addRelationship.familyName.placeholder' | translate}}">
         </div>
-        <div class="col-md-4"
-        [class.has-error]="!form.controls['dob'].valid">
-            <h4>{{'addRelationship.dob.label' | translate}}</h4>
-            <p-calendar
-                    placeholder="{{'addRelationship.dob.placeholder' | translate}}"
-                    inputStyleClass="form-control"
-                    [formControl]="form.controls['dob']"
-                    dateFormat="{{dateFormat}}"
-                    monthNavigator="true"
-                    yearNavigator="true"
-                    yearRange="-100:+0"
-            ></p-calendar>
+        <div *ngIf="showDob">
+            <div class="col-md-4"
+                 [class.has-error]="!form.controls['dob'].valid">
+                <h4>{{'addRelationship.dob.label' | translate}}</h4>
+                <p-calendar
+                        placeholder="{{'addRelationship.dob.placeholder' | translate}}"
+                        inputStyleClass="form-control"
+                        [disabled]='isDisabled()'
+                        [formControl]="form.controls['dob']"
+                        dateFormat="{{dateFormat}}"
+                        monthNavigator="true"
+                        yearNavigator="true"
+                        yearRange="-100:+0"
+                ></p-calendar>
+            </div>
         </div>
     </div>
 </form>

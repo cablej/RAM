@@ -1,10 +1,11 @@
 import {Component, Input} from '@angular/core';
 import {Router} from '@angular/router';
 
+import {Constants} from '../../../../commons/constants';
 import {RAMServices} from '../../services/ram-services';
-import {RAMConstants} from '../../services/ram-constants.service';
 
 import {IIdentity} from '../../../../commons/api';
+import {IdentityCanCreateRelationshipPermission} from '../../../../commons/permissions/identityPermission.templates';
 
 @Component({
     selector: 'page-header',
@@ -42,7 +43,7 @@ export class PageHeaderAuthComponent {
     public goToRelationshipsPage() {
         if (this.identity) {
             this.services.route.goToRelationshipsPage(
-                this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity)
+                this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity)
             );
         }
     };
@@ -51,7 +52,7 @@ export class PageHeaderAuthComponent {
         if (this.isGiveAuthorisationsPageEnabled()) {
             if (this.identity) {
                 this.services.route.goToAddRelationshipPage(
-                    this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity)
+                    this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity)
                 );
             }
         }
@@ -59,7 +60,9 @@ export class PageHeaderAuthComponent {
 
     public goToGetAuthorisationPage() {
         if (this.identity) {
-            this.services.route.goToRelationshipEnterCodePage(this.identity.idValue);
+            this.services.route.goToRelationshipEnterCodePage(
+                this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity)
+            );
         }
     };
 
@@ -81,7 +84,9 @@ export class PageHeaderAuthComponent {
     };
 
     public isGiveAuthorisationsPageEnabled() {
-        return this.identity !== null && this.identity !== undefined && this.giveAuthorisationsEnabled;
+        return this.identity !== null &&
+            this.identity !== undefined &&
+            this.identity.isPermissionAllowed([IdentityCanCreateRelationshipPermission]);
     }
 
     // todo logins page

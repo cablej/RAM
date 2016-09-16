@@ -2,7 +2,10 @@ import * as mongoose from 'mongoose';
 import {RAMEnum, CodeDecodeSchema, ICodeDecode, CodeDecode, Model} from './base';
 import {Url} from './url';
 import {RelationshipAttributeNameModel} from './relationshipAttributeName.model';
-import {IRelationshipAttributeNameUsage, RelationshipAttributeNameUsageModel} from './relationshipAttributeNameUsage.model';
+import {
+    IRelationshipAttributeNameUsage,
+    RelationshipAttributeNameUsageModel
+} from './relationshipAttributeNameUsage.model';
 import {
     HrefValue,
     RelationshipType as DTO,
@@ -10,12 +13,10 @@ import {
 } from '../../../commons/api';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _RelationshipAttributeNameModel = RelationshipAttributeNameModel;
-
-/* tslint:disable:no-unused-variable */
 const _RelationshipAttributeNameUsageModel = RelationshipAttributeNameUsageModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -51,25 +52,10 @@ const RelationshipTypeSchema = CodeDecodeSchema({
         required: [true, 'Min Identity Strength is required'],
         default: 0
     },
-    voluntaryInd: {
-        type: Boolean,
-        required: [true, 'Voluntary Ind is required'],
-        default: false
-    },
-    managedExternallyInd: {
-        type: Boolean,
-        required: [true, 'Managed Externally Ind is required'],
-        default: false
-    },
-    autoAcceptIfInitiatedFromDelegate: {
-        type: Boolean,
-        required: [true, 'Auto-Accept If Initiated From Delegate is required'],
-        default: false
-    },
-    autoAcceptIfInitiatedFromSubject: {
-        type: Boolean,
-        required: [true, 'Auto-Accept If Initiated From Subject is required'],
-        default: false
+    strength: {
+        type: Number,
+        required: [true, 'Strength is required'],
+        default: 0
     },
     category: {
         type: String,
@@ -86,27 +72,22 @@ const RelationshipTypeSchema = CodeDecodeSchema({
 // interfaces .........................................................................................................
 
 export interface IRelationshipType extends ICodeDecode {
+    strength: number;
     minCredentialStrength: number;
     minIdentityStrength: number;
-    voluntaryInd: boolean;
-    managedExternallyInd: boolean;
-    autoAcceptIfInitiatedFromDelegate: boolean;
-    autoAcceptIfInitiatedFromSubject: boolean;
     category: string;
     attributeNameUsages: IRelationshipAttributeNameUsage[];
     categoryEnum(): RelationshipTypeCategory;
-    findAttributeNameUsageByCode(code: string): IRelationshipAttributeNameUsage;
+    findAttributeNameUsage(code: string): IRelationshipAttributeNameUsage;
     toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>>;
     toDTO(): Promise<DTO>;
 }
 
 class RelationshipType extends CodeDecode implements IRelationshipType {
+
+    public strength: number;
     public minCredentialStrength: number;
     public minIdentityStrength: number;
-    public voluntaryInd: boolean;
-    public managedExternallyInd: boolean;
-    public autoAcceptIfInitiatedFromDelegate: boolean;
-    public autoAcceptIfInitiatedFromSubject: boolean;
     public category: string;
     public attributeNameUsages: IRelationshipAttributeNameUsage[];
 
@@ -114,7 +95,7 @@ class RelationshipType extends CodeDecode implements IRelationshipType {
         return RelationshipTypeCategory.valueOf(this.category);
     }
 
-    public findAttributeNameUsageByCode(code: string): IRelationshipAttributeNameUsage {
+    public findAttributeNameUsage(code: string): IRelationshipAttributeNameUsage {
         for (let attributeNameUsage of this.attributeNameUsages) {
             if (attributeNameUsage.attributeName.code === code) {
                 return attributeNameUsage;
@@ -137,10 +118,9 @@ class RelationshipType extends CodeDecode implements IRelationshipType {
             this.longDecodeText,
             this.startDate,
             this.endDate,
+            this.strength,
             this.minCredentialStrength,
             this.minIdentityStrength,
-            this.voluntaryInd,
-            this.managedExternallyInd,
             this.category,
             await Promise.all<RelationshipAttributeNameUsageDTO>(this.attributeNameUsages.map(
                 async(attributeNameUsage: IRelationshipAttributeNameUsage) => {
@@ -167,7 +147,7 @@ export class RelationshipTypeModel {
         return RelationshipTypeMongooseModel.create(source);
     }
 
-    public static findByCodeIgnoringDateRange(code: String): Promise<IRelationshipType> {
+    public static async findByCodeIgnoringDateRange(code: String): Promise<IRelationshipType> {
         return RelationshipTypeMongooseModel
             .findOne({
                 code: code
@@ -178,7 +158,7 @@ export class RelationshipTypeModel {
             .exec();
     }
 
-    public static findByCodeInDateRange(code: String, date: Date): Promise<IRelationshipType> {
+    public static async findByCodeInDateRange(code: String, date: Date): Promise<IRelationshipType> {
         return RelationshipTypeMongooseModel
             .findOne({
                 code: code,
@@ -191,7 +171,8 @@ export class RelationshipTypeModel {
             .exec();
     }
 
-    public static listIgnoringDateRange(): Promise<IRelationshipType[]> {
+    // todo change to search result with pagesize of 100 and add filters
+    public static async listIgnoringDateRange(): Promise<IRelationshipType[]> {
         return RelationshipTypeMongooseModel
             .find({})
             .deepPopulate([
@@ -201,7 +182,8 @@ export class RelationshipTypeModel {
             .exec();
     }
 
-    public static listInDateRange(date: Date): Promise<IRelationshipType[]> {
+    // todo change to search result with pagesize of 100 and add filters
+    public static async listInDateRange(date: Date): Promise<IRelationshipType[]> {
         return RelationshipTypeMongooseModel
             .find({
                 startDate: {$lte: date},

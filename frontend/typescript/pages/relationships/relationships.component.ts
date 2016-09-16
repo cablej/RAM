@@ -1,14 +1,14 @@
 import {Component} from '@angular/core';
 import {ROUTER_DIRECTIVES, ActivatedRoute, Router, Params} from '@angular/router';
 import {FORM_DIRECTIVES, REACTIVE_FORM_DIRECTIVES, FormBuilder, FormGroup} from '@angular/forms';
-
 import {AbstractPageComponent} from '../abstract-page/abstract-page.component';
 import {PageHeaderAuthComponent} from '../../components/page-header/page-header-auth.component';
-import {SearchResultPaginationComponent, SearchResultPaginationDelegate}
-    from '../../components/search-result-pagination/search-result-pagination.component';
+import {
+    SearchResultPaginationComponent,
+    SearchResultPaginationDelegate
+} from '../../components/search-result-pagination/search-result-pagination.component';
+import {Constants} from '../../../../commons/constants';
 import {RAMServices} from '../../services/ram-services';
-import {RAMConstants} from '../../services/ram-constants.service';
-
 import {
     ISearchResult,
     IParty,
@@ -21,6 +21,8 @@ import {
     IHrefValue,
     FilterParams
 } from '../../../../commons/api';
+import {IdentityCanCreateRelationshipPermission} from '../../../../commons/permissions/identityPermission.templates';
+import {RelationshipCanModifyPermission, RelationshipCanAcceptPermission} from '../../../../commons/permissions/relationshipPermission.templates';
 
 @Component({
     selector: 'list-relationships',
@@ -40,7 +42,7 @@ export class RelationshipsComponent extends AbstractPageComponent {
     public filter: FilterParams;
     public page: number;
 
-    public giveAuthorisationsEnabled: boolean = true; // todo need to set this
+    public giveAuthorisationsEnabled: boolean = true;
     public identity: IIdentity;
     public relationshipRefs: ISearchResult<IHrefValue<IRelationship>>;
     public partyTypeRefs: IHrefValue<IPartyType>[];
@@ -71,17 +73,17 @@ export class RelationshipsComponent extends AbstractPageComponent {
         this.page = params.query['page'] ? +params.query['page'] : 1;
 
         // restrict to authorisations
-        this.filter.add('relationshipTypeCategory', RAMConstants.RelationshipTypeCategory.AUTHORISATION);
+        this.filter.add('relationshipTypeCategory', Constants.RelationshipTypeCategory.AUTHORISATION);
 
         // message
         const msg = params.query['msg'];
-        if (msg === RAMConstants.GlobalMessage.DELEGATE_NOTIFIED) {
+        if (msg === Constants.GlobalMessage.DELEGATE_NOTIFIED) {
             this.addGlobalMessage('A notification has been sent to the delegate.');
-        } else if (msg === RAMConstants.GlobalMessage.DECLINED_RELATIONSHIP) {
+        } else if (msg === Constants.GlobalMessage.DECLINED_RELATIONSHIP) {
             this.addGlobalMessage('You have declined the relationship.');
-        } else if (msg === RAMConstants.GlobalMessage.ACCEPTED_RELATIONSHIP) {
+        } else if (msg === Constants.GlobalMessage.ACCEPTED_RELATIONSHIP) {
             this.addGlobalMessage('You have accepted the relationship.');
-        } else if (msg === RAMConstants.GlobalMessage.CANCEL_ACCEPT_RELATIONSHIP) {
+        } else if (msg === Constants.GlobalMessage.CANCEL_ACCEPT_RELATIONSHIP) {
             this.addGlobalMessage('You cancelled without accepting or declining the relationship');
         }
 
@@ -109,14 +111,14 @@ export class RelationshipsComponent extends AbstractPageComponent {
         // relationship types
         this.services.rest.listRelationshipTypes().subscribe((relationshipTypeRefs) => {
             this.relationshipTypeRefs = relationshipTypeRefs.filter((relationshipType) => {
-                return relationshipType.value.category === RAMConstants.RelationshipTypeCategory.AUTHORISATION;
+                return relationshipType.value.category === Constants.RelationshipTypeCategory.AUTHORISATION;
             });
         });
 
         // pagination delegate
         this.paginationDelegate = {
             goToPage: (page: number) => {
-                this.services.route.goToRelationshipsPage(this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity), this.filter.encode(), page);
+                this.services.route.goToRelationshipsPage(this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity), this.filter.encode(), page);
             }
         } as SearchResultPaginationDelegate;
 
@@ -135,6 +137,9 @@ export class RelationshipsComponent extends AbstractPageComponent {
     public onFindIdentity(identity: IIdentity) {
 
         this.identity = identity;
+
+        // give authorisation permissions
+        this.giveAuthorisationsEnabled = this.identity.isPermissionAllowed([IdentityCanCreateRelationshipPermission]);
 
         // relationships
         this.services.rest.searchRelationshipsByIdentity(this.identity.idValue, this.filter.encode(), this.page).subscribe({
@@ -185,7 +190,9 @@ export class RelationshipsComponent extends AbstractPageComponent {
                 }
             }
         }
-        return providerNames.join(',');
+        return providerNames
+            .filter((value, index, self) => self.indexOf(value) === index)
+            .join(',');
     }
 
     public get isLoading() {
@@ -204,36 +211,42 @@ export class RelationshipsComponent extends AbstractPageComponent {
         //console.log('Filter (encoded): ' + filterString);
         //console.log('Filter (decoded): ' + JSON.stringify(FilterParams.decode(filterString), null, 4));
         this.services.route.goToRelationshipsPage(
-            this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity),
+            this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity),
             filterString
         );
     }
 
     public goToRelationshipAddPage() {
         this.services.route.goToAddRelationshipPage(
-            this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity)
+            this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity)
         );
     };
 
     public goToRelationshipEnterCodePage() {
-        // todo refactor to href
-        this.services.route.goToRelationshipEnterCodePage(this.identity.idValue);
+        this.services.route.goToRelationshipEnterCodePage(this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity));
     };
 
     public goToRelationshipsContext(partyResource: IHrefValue<IParty>) {
         const defaultIdentityResource = this.services.model.getDefaultIdentityResource(partyResource.value);
         if (defaultIdentityResource) {
-            this.services.route.goToRelationshipsPage(this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, defaultIdentityResource.value));
+            this.services.route.goToRelationshipsPage(this.services.model.getLinkHrefByType(Constants.Link.SELF, defaultIdentityResource.value));
         }
     }
 
-    // todo go to relationship page
     public goToRelationshipPage(relationshipRef: IHrefValue<IRelationship>) {
-        alert('TODO: Not yet implemented');
+        this.services.route.goToEditRelationshipPage(this.identityHref, relationshipRef.href);
+    }
+
+    public goToAcceptRejectRelationshipPage(relationshipRef: IHrefValue<IRelationship>) {
+        this.services.route.goToRelationshipAcceptPage(this.identityHref, relationshipRef.href);
     }
 
     public isEditRelationshipEnabled(relationshipRef: IHrefValue<IRelationship>) {
-        return this.services.model.hasLinkHrefByType(RAMConstants.Link.MODIFY, relationshipRef.value);
+        return relationshipRef.value.isPermissionAllowed([RelationshipCanModifyPermission]);
+    }
+
+    public isAcceptRejectRelationshipEnabled(relationshipRef: IHrefValue<IRelationship>) {
+        return relationshipRef.value.isPermissionAllowed([RelationshipCanAcceptPermission]);
     }
 
 }

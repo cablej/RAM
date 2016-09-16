@@ -5,7 +5,7 @@ import {RelationshipTypeModel} from '../models/relationshipType.model';
 
 export class RelationshipTypeController {
 
-    private findByCodeIgnoringDateRange = async (req:Request, res:Response) => {
+    private findByCodeIgnoringDateRange = async(req: Request, res: Response) => {
         const schema = {
             'code': {
                 in: 'params',
@@ -14,24 +14,24 @@ export class RelationshipTypeController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipTypeModel.findByCodeIgnoringDateRange(req.params.code))
+            .then((req: Request) => RelationshipTypeModel.findByCodeIgnoringDateRange(req.params.code))
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private listIgnoringDateRange = async (req:Request, res:Response) => {
+    private listIgnoringDateRange = async(req: Request, res: Response) => {
         const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => RelationshipTypeModel.listIgnoringDateRange())
+            .then((req: Request) => RelationshipTypeModel.listIgnoringDateRange())
             .then((results) => results ? results.map((model) => model.toHrefValue(true)) : null)
             .then(sendList(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    public assignRoutes = (router:Router) => {
+    public assignRoutes = (router: Router) => {
 
         router.get('/v1/relationshipType/:code',
             context.begin,

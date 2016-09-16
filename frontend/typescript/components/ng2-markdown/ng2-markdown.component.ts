@@ -3,14 +3,14 @@
  * Attempting to turn transpiler on causes an internal
  * error.
  */
-import {Directive, ElementRef, OnInit, Input} from '@angular/core';
+import {Directive, ElementRef, OnInit, Input, OnChanges, SimpleChanges} from '@angular/core';
 import Showdown from 'showdown';
 
 @Directive({
     selector: 'ng2-markdown'
 })
 
-export class MarkdownComponent implements OnInit {
+export class MarkdownComponent implements OnInit, OnChanges {
 
     @Input() public markdown: string;
 
@@ -18,11 +18,15 @@ export class MarkdownComponent implements OnInit {
     }
 
     public ngOnInit() {
-        this.process(this.markdown);
+        this.process();
     }
 
-    private process(markdown: string) {
+    public ngOnChanges(changes: SimpleChanges): any {
+        this.process();
+    }
+
+    private process() {
         let converter = new Showdown.Converter();
-        this.elementRef.nativeElement.innerHTML = converter.makeHtml(markdown);
+        this.elementRef.nativeElement.innerHTML = converter.makeHtml(this.markdown);
     }
 }

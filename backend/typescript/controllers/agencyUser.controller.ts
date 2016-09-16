@@ -22,7 +22,7 @@ export class AgencyUserController {
     private search = async(req: Request, res: Response) => {
         const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => AgencyUsersSeeder.all())
+            .then((req: Request) => AgencyUsersSeeder.all())
             .then((results) => (results.map((model) => model.toDTO())))
             .then(sendList(res))
             .then(sendNotFoundError(res))

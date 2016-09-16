@@ -49,15 +49,15 @@ export const routes: RouterConfig = [
         component: EditRelationshipComponent
     },
     {
-        path: 'relationships/add/complete/:idValue/:invitationCode/:displayName',
+        path: 'relationships/add/complete/:identityHref/:relationshipHref',
         component: AddRelationshipCompleteComponent
     },
     {
-        path: 'relationships/add/enter/:idValue',
+        path: 'relationships/add/enter/:identityHref',
         component: EnterInvitationCodeComponent
     },
     {
-        path: 'relationships/add/accept/:idValue/:invitationCode',
+        path: 'relationships/add/accept/:identityHref/:relationshipHref',
         component: AcceptAuthorisationComponent
     },
     {

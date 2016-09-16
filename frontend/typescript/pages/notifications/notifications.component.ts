@@ -6,7 +6,7 @@ import {AbstractPageComponent} from '../abstract-page/abstract-page.component';
 import {PageHeaderSPSComponent} from '../../components/page-header/page-header-sps.component';
 import {SearchResultPaginationComponent, SearchResultPaginationDelegate}
     from '../../components/search-result-pagination/search-result-pagination.component';
-import {RAMConstants} from '../../services/ram-constants.service';
+import {Constants} from '../../../../commons/constants';
 import {RAMServices} from '../../services/ram-services';
 
 import {
@@ -61,11 +61,11 @@ export class NotificationsComponent extends AbstractPageComponent {
         this.page = params.query['page'] ? +params.query['page'] : 1;
 
         // restrict to notifications
-        this.filter.add('relationshipTypeCategory', RAMConstants.RelationshipTypeCategory.NOTIFICATION);
+        this.filter.add('relationshipTypeCategory', Constants.RelationshipTypeCategory.NOTIFICATION);
 
         // message
         const msg = params.query['msg'];
-        if (msg === RAMConstants.GlobalMessage.SAVED_NOTIFICATION) {
+        if (msg === Constants.GlobalMessage.SAVED_NOTIFICATION) {
             this.addGlobalMessage('The notification has been saved successfully.');
         }
 
@@ -147,13 +147,13 @@ export class NotificationsComponent extends AbstractPageComponent {
 
     public isAddNotificationEnabled(): boolean {
         if (this.identity) {
-            return this.services.model.hasLinkHrefByType(RAMConstants.Link.RELATIONSHIP_CREATE, this.identity);
+            return this.services.model.hasLinkHrefByType(Constants.Link.RELATIONSHIP_CREATE, this.identity);
         }
         return false;
     }
 
     public isEditNotificationEnabled(relationshipRef: IHrefValue<IRelationship>): boolean {
-        return this.services.model.hasLinkHrefByType(RAMConstants.Link.MODIFY, relationshipRef.value);
+        return this.services.model.hasLinkHrefByType(Constants.Link.MODIFY, relationshipRef.value);
     }
 
     public isDashboardEnabled(): boolean {

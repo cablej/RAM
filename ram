@@ -6,6 +6,16 @@ me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DEFAULT_CONF=$DIR/backend/conf/conf-localhost.js
 
+GLOBAL=
+
+for i in ${@:1}
+do
+    if [ $i == '--global' ]
+    then GLOBAL="-g "
+    fi
+done
+
+
 # prerequisites:
 #  brew
 #  git
@@ -29,9 +39,9 @@ case "$1" in
     echo ""
     echo "Setting up local workstation ..."
     echo ""
-    npm install -g typings
-    npm install -g gulp
-    npm install -g bower
+    npm install $GLOBAL typings
+    npm install $GLOBAL gulp
+    npm install $GLOBAL bower
     echo ""
     ;;
 
@@ -255,6 +265,15 @@ case "$1" in
     echo ""
     ;;
 
+  'lint:tests')
+    echo ""
+    echo "Running ts:lint on tests"
+    echo ""
+    cd tests
+    gulp ts:lint
+    echo ""
+    ;;
+
 # COMPILE
 
   'compile:frontend')
@@ -427,6 +446,7 @@ case "$1" in
     echo "Usage:"
     echo ""
     echo "$(tput setaf 5)    $me$(tput sgr0) $(tput setaf 3)<command>$(tput sgr0)"
+    echo "$(tput sgr0)    Optionally can add --global parameter to perform setup with npm -g flag."
     echo ""
     echo "Commands:"
     echo ""
@@ -446,6 +466,7 @@ case "$1" in
     echo ""
     echo "$(tput setaf 3)    lint:frontend                        $(tput sgr0)      Runs lint on frontend"
     echo "$(tput setaf 3)    lint:backend                         $(tput sgr0)      Runs lint on backend"
+    echo "$(tput setaf 3)    lint:tests                           $(tput sgr0)      Runs lint on tests"
     echo ""
     echo "$(tput setaf 3)    compile:frontend                     $(tput sgr0)      Runs compile on frontend"
     echo "$(tput setaf 3)    compile:backend                      $(tput sgr0)      Runs compile on backend"

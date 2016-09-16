@@ -3,16 +3,10 @@ import {context} from '../providers/context.provider';
 import {sendResource, sendError, sendNotFoundError, validateReqSchema} from './helpers';
 import {conf} from '../bootstrap';
 import {HealthCheck} from '../models/healthCheck.model';
-import {logger} from '../logger';
-import {Translator} from '../ram/translator';
 
 export class SystemController {
 
     private healthCheckShallow = async(req: Request, res: Response) => {
-
-        const trans = Translator.get('HELLO');
-        logger.info(`${trans}`);
-
         const schema = {};
         validateReqSchema(req, schema)
             .then((req: Request) => {
@@ -45,9 +39,9 @@ export class SystemController {
             .then((req: Request) => {
                 return {};
             })
-            .then(async (model: {[key: string]: string}) => {
+            .then(async(model: {[key: string]: string}) => {
                 for (let i = 0; i < pause; i = i + 1) {
-                //     await IdentityModel.findByInvitationCode('some id ' + msg);
+                    // await IdentityModel.findByInvitationCode('some id ' + msg);
                 }
                 model[msg] = context.get(msg);
                 model['msg copy'] = context.get('msg');

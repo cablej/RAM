@@ -10,18 +10,18 @@ export class IdentityController {
     constructor() {
     }
 
-    private findMe = async (req:Request, res:Response) => {
+    private findMe = async(req: Request, res: Response) => {
         const identity = res.locals[Headers.Identity];
         const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => identity ? identity : null)
+            .then((req: Request) => identity ? identity : null)
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private findByIdentityIdValue = async (req:Request, res:Response) => {
+    private findByIdentityIdValue = async(req: Request, res: Response) => {
         const schema = {
             'idValue': {
                 in: 'params',
@@ -30,14 +30,14 @@ export class IdentityController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => IdentityModel.findByIdValue(req.params.idValue))
+            .then((req: Request) => IdentityModel.findByIdValue(req.params.idValue))
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private findPendingByInvitationCodeInDateRange = async (req:Request, res:Response) => {
+    private findPendingByInvitationCodeInDateRange = async(req: Request, res: Response) => {
         const schema = {
             'invitationCode': {
                 notEmpty: true,
@@ -45,14 +45,14 @@ export class IdentityController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => IdentityModel.findPendingByInvitationCodeInDateRange(req.params.invitationCode, new Date()))
+            .then((req: Request) => IdentityModel.findPendingByInvitationCodeInDateRange(req.params.invitationCode, new Date()))
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private search = async (req:Request, res:Response) => {
+    private search = async(req: Request, res: Response) => {
         const schema = {
             'page': {
                 in: 'query',
@@ -70,7 +70,7 @@ export class IdentityController {
             },
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => IdentityModel.searchLinkIds(
+            .then((req: Request) => IdentityModel.searchLinkIds(
                 parseInt(req.query.page),
                 req.query.pageSize ? parseInt(req.query.pageSize) : null)
             )
@@ -80,7 +80,7 @@ export class IdentityController {
             .catch(sendError(res));
     };
 
-    public assignRoutes = (router:Router) => {
+    public assignRoutes = (router: Router) => {
 
         router.get('/v1/identity/me',
             context.begin,

@@ -8,7 +8,7 @@ export class ProfileController {
     constructor() {
     }
 
-    private findProviderByCode = (req:Request, res:Response) => {
+    private findProviderByCode = (req: Request, res: Response) => {
         const schema = {
             'code': {
                 in: 'params',
@@ -17,25 +17,24 @@ export class ProfileController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => ProfileProvider.valueOf(req.params.code) as ProfileProvider)
+            .then((req: Request) => ProfileProvider.valueOf(req.params.code) as ProfileProvider)
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private listProviders = (req:Request, res:Response) => {
-        const schema = {
-        };
+    private listProviders = (req: Request, res: Response) => {
+        const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => ProfileProvider.values() as ProfileProvider[])
+            .then((req: Request) => ProfileProvider.values() as ProfileProvider[])
             .then((results) => results ? results.map((model) => model.toHrefValue(true)) : null)
             .then(sendList(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    public assignRoutes = (router:Router) => {
+    public assignRoutes = (router: Router) => {
 
         router.get('/v1/profileProvider/:code',
             context.begin,

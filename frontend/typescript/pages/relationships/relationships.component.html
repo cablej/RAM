@@ -1,7 +1,6 @@
 <page-header [identity]="identity"
              tab="MANAGE_AUTHORISATIONS"
-             [messages]="globalMessages"
-             [giveAuthorisationsEnabled]="giveAuthorisationsEnabled"></page-header>
+             [messages]="globalMessages"></page-header>
 
 <form [formGroup]=form>
     <div class="panel panel-default container-fluid">
@@ -95,17 +94,22 @@
                 </td>
             </tr>
             <tr *ngFor="let relationshipRef of item.relationshipRefs">
-                <td>{{services.model.displayName(relationshipRef.value.delegateNickName)}}</td>
+                <td>{{services.model.displayName(relationshipRef.value.delegateNickName)}}
+                    <span class="label label-warning" *ngIf="relationshipRef.value.isPending()">{{services.model.relationshipStatusLabel(relationshipStatusRefs, relationshipRef.value.status)}}</span>
+                </td>
                 <td>{{commaSeparatedListOfProviderNames(relationshipRef.value.delegate.value)}}</td>
                 <td>{{services.model.relationshipTypeLabel(relationshipTypeRefs, relationshipRef.value)}}</td>
                 <td>{{services.model.relationshipStatusLabel(relationshipStatusRefs, relationshipRef.value.status)}}</td>
-                <td><a class="btn btn-sm btn-secondary align-center" (click)="goToRelationshipPage(relationshipRef)" *ngIf="isEditRelationshipEnabled(relationshipRef)">Manage <span class="caret"></span></a></td>
+                <td>
+                    <a class="btn btn-sm btn-secondary align-center" (click)="goToRelationshipPage(relationshipRef)" *ngIf="isEditRelationshipEnabled(relationshipRef)">{{'edit' | translate}}</a>
+                    <a class="btn btn-sm btn-secondary align-center" (click)="goToAcceptRejectRelationshipPage(relationshipRef)" *ngIf="isAcceptRejectRelationshipEnabled(relationshipRef)">{{'accept' | translate}} / {{'decline' | translate}}</a>
+                </td>
             </tr>
         </template>
     </tbody>
     <tbody *ngIf="isLoading">
         <tr>
-            <td colspan="5" class="text-center"><h3>Loading ...</h3></td>
+            <td colspan="5" class="text-center"><h3>Loading ...</h3><br/></td>
         </tr>
     </tbody>
 </table>

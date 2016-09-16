@@ -32,7 +32,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             stringRoleAttributeNameFutureEndDate = await RoleAttributeNameModel.create({
@@ -44,7 +45,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             stringRoleAttributeNameExpiredEndDate = await RoleAttributeNameModel.create({
@@ -56,7 +58,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             singleSelectRoleAttributeNameNoEndDate = await RoleAttributeNameModel.create({
@@ -68,7 +71,8 @@ describe('RAM Role Attribute Name', () => {
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
                 purposeText: 'This attribute purpose text',
-                permittedValues: ['Choice 1', 'Choice 2', 'Choice 3']
+                permittedValues: ['Choice 1', 'Choice 2', 'Choice 3'],
+                appliesToInstance: true
             });
 
             roleType1 = await RoleTypeModel.create({
@@ -210,7 +214,8 @@ describe('RAM Role Attribute Name', () => {
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
                 purposeText: 'This attribute purpose text',
-                startDate: new Date()
+                startDate: new Date(),
+                appliesToInstance: true
             });
             fail('should not have inserted with null code');
             done();
@@ -230,7 +235,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
             fail('should not have inserted with empty code');
             done();
@@ -249,7 +255,8 @@ describe('RAM Role Attribute Name', () => {
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
                 classifier: RoleAttributeNameClassifier.Other.code,
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null domain');
             done();
@@ -270,7 +277,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: '__BOGUS__',
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
             fail('should not have inserted with invalid domain');
             done();
@@ -289,7 +297,8 @@ describe('RAM Role Attribute Name', () => {
                 longDecodeText: 'Some long decode text',
                 startDate: new Date(),
                 domain: RoleAttributeNameDomain.String.code,
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null domain');
             done();
@@ -309,7 +318,8 @@ describe('RAM Role Attribute Name', () => {
                 startDate: new Date(),
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: '__BOGUS__',
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null domain');
             done();
@@ -329,7 +339,8 @@ describe('RAM Role Attribute Name', () => {
                 startDate: new Date(),
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
-                category: 'category'
+                category: 'category',
+                appliesToInstance: true
             });
             fail('should not have inserted with null purpose text');
             done();
@@ -350,7 +361,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: ''
+                purposeText: '',
+                appliesToInstance: true
             });
             fail('should not have inserted with empty purpose text');
             done();
@@ -374,7 +386,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             await RoleAttributeNameModel.create({
@@ -385,7 +398,8 @@ describe('RAM Role Attribute Name', () => {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: 'category',
-                purposeText: 'This attribute purpose text'
+                purposeText: 'This attribute purpose text',
+                appliesToInstance: true
             });
 
             fail('should not have inserted with duplicate code');

@@ -46,15 +46,21 @@ gulp.task("ts:compile", ["ts:lint"], function () {
 
 gulp.task("copy:i18n", function () {
     return gulp.src(["i18n/{**,./}/*.json"], { base: "./" })
-            .pipe(gulp.dest("dist"));
+            .pipe(gulp.dest("dist/backend"));
+});
+
+gulp.task("copy:views", function () {
+    return gulp.src(["views/{**,./}/*.html"], { base: "./" })
+            .pipe(gulp.dest("dist/backend"));
 });
 
 gulp.task("ts:watch", ["ts:compile"], function () {
     gulp.watch(["typescript/**/*.ts", "../commons/**/*.ts", "typings/**/*.d.ts"], ["ts:compile"]);
     gulp.watch(["i18n/*.*"], ["copy:i18n"]);
+    gulp.watch(["views/*.*"], ["copy:views"]);
 });
 
-gulp.task('serve', ["copy:i18n", "ts:watch"], function () {
+gulp.task('serve', ["copy:i18n", "copy:views", "ts:watch"], function () {
     nodemon({
         script: 'dist/backend/typescript/server.js',
         "verbose": false,
@@ -70,7 +76,7 @@ gulp.task('serve', ["copy:i18n", "ts:watch"], function () {
         });
 });
 
-gulp.task('servedebug', ["copy:i18n", "ts:watch"], function () {
+gulp.task('servedebug', ["copy:i18n", "copy:views", "ts:watch"], function () {
     nodemon({
         script: 'dist/backend/typescript/server.js',
         "verbose": false,
@@ -86,7 +92,7 @@ gulp.task('servedebug', ["copy:i18n", "ts:watch"], function () {
         });
 });
 
-gulp.task('seed', ["ts:compile"], function (cb) {
+gulp.task('seed', ["ts:compile", "copy:i18n"], function (cb) {
     exec('node dist/backend/typescript/seeding/seeder.js --color', function (err, stdout, stderr) {
         if (stdout) {
             console.log(stdout);

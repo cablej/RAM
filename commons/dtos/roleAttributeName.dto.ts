@@ -23,7 +23,8 @@ export class RoleAttributeName extends CodeDecode implements IRoleAttributeName 
                 public domain: string,
                 public classifier: string,
                 public category: string,
-                public permittedValues: string[]) {
+                public permittedValues: string[],
+                public appliesToInstance: boolean) {
         super(code, shortDecodeText, longDecodeText, startTimestamp, endTimestamp);
     }
 }

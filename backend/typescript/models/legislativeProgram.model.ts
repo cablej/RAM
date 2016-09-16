@@ -30,7 +30,7 @@ export class LegislativeProgramModel {
         return LegislativeProgramMongooseModel.create(source);
     }
 
-    public static findByCodeIgnoringDateRange(code: string): Promise<ILegislativeProgram> {
+    public static async findByCodeIgnoringDateRange(code: string): Promise<ILegislativeProgram> {
         return LegislativeProgramMongooseModel
             .findOne({
                 code: code
@@ -38,7 +38,7 @@ export class LegislativeProgramModel {
             .exec();
     }
 
-    public static findByCodeInDateRange(code: string, date: Date): Promise<ILegislativeProgram> {
+    public static async findByCodeInDateRange(code: string, date: Date): Promise<ILegislativeProgram> {
         return LegislativeProgramMongooseModel
             .findOne({
                 code: code,
@@ -48,14 +48,14 @@ export class LegislativeProgramModel {
             .exec();
     }
 
-    public static listIgnoringDateRange(): Promise<ILegislativeProgram[]> {
+    public static async listIgnoringDateRange(): Promise<ILegislativeProgram[]> {
         return LegislativeProgramMongooseModel
             .find({})
             .sort({shortDecodeText: 1})
             .exec();
     }
 
-    public static listInDateRange(date: Date): Promise<ILegislativeProgram[]> {
+    public static async listInDateRange(date: Date): Promise<ILegislativeProgram[]> {
         return LegislativeProgramMongooseModel
             .find({
                 startDate: {$lte: date},

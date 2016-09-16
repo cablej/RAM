@@ -8,15 +8,9 @@ import {IRelationshipAttributeNameUsage, IRelationshipAttribute} from '../../../
 export class AuthorisationPermissionsComponent {
     @Input('permissionAttributes') public permissionAttributes: IRelationshipAttribute[];
 
-    // use for sortOrder - ignoring for now
+    // todo nev ignore? use for sortOrder - ignoring for now
     @Input('attributeNameUsages') public attributeNameUsages: IRelationshipAttributeNameUsage[];
     @Input('data') public data: AuthorisationPermissionsComponentData;
-
-    public accessLevels = {
-        full: 'Full access',
-        limited: 'Limited access',
-        none: null as string
-    };
 
     public toggle(permissionAttribute: IRelationshipAttribute, permittedValue: string) {
         if (permissionAttribute.value.length === 0 || permissionAttribute.value[0] !== permittedValue) {
@@ -24,7 +18,7 @@ export class AuthorisationPermissionsComponent {
         } else {
             permissionAttribute.value = [];
         }
-    };
+    }
 
 }
 

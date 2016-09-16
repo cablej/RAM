@@ -5,7 +5,13 @@
 
   "yes" : "Yes",
   "no" : "No",
+  "edit" : "Edit",
+  "accept" : "Accept",
+  "decline" : "Decline",
+  "manage" : "Manage",
   "back" : "Back",
+  "save" : "Save",
+  "submit" : "Submit",
   "pleaseChoose" : "Please Choose ...",
   "date.placeholder" : "dd/mm/yyyy ...",
 
@@ -20,6 +26,7 @@
   "addRelationship.dob.placeholder" : "dd/mm/yyyy ...",
   "addRelationship.abn.label" : "ABN",
   "addRelationship.abn.placeholder" : "Type ABN here ...",
+  "addRelationship.organisationName.label" : "Organisation Name",
   "addRelationship.checkABN" : "Check ABN",
   "addRelationship.changeABN" : "Change ABN",
   "addRelationship.authType.heading" : "Set authorisation type",
@@ -31,7 +38,7 @@
   "addRelationship.accessPeriod.endDate" : "End date",
   "addRelationship.accessPeriod.noEndDate" : "No end date",
   "addRelationship.authMgmt.header" : "Set authorisation management",
-  "addRelationship.declaration.header" : "Declaration",
+  "addRelationship.declaration.header" : "Accept declaration",
   "addRelationship.declaration.agree" : "I agree to this declaration",
   "addRelationship.authorise" : "Authorise",
   "_comment - person's name comes before this" : "",
@@ -44,5 +51,10 @@
   "acceptRelationship.enterAuthCode" : "Please enter the authorisation code for the relationship you wish to establish.",
   "acceptRelationship.insufficientStrength" : "YOUR CREDENTIAL CANNOT ACCEPT THIS AUTHORISATION. The identity in your credential has not been verified to the level required to accept a universal representative authorisation. To accept this authorisation you need to verify the identity of your credential or use a credential with a verified identity. See Help for instructions.",
 
+  "editNotification.providerDetails.header" : "Enter provider details",
+  "editNotification.notificationDetails.header" : "Enter notification details",
+  "editNotification.declaration.header" : "Accept Declaration",
+
   "dummy" : "to avoid having to keep adding a comma when adding on to the end of this file :)"
+
 }

@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "RAM",
-		"_postman_id": "4b560a17-31b9-fc76-76a0-8de4672f6dc8",
+		"_postman_id": "f2f2beb2-1ea1-203a-4830-86d522a7f289",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -15,6 +15,33 @@
 					"name": "Get (me)",
 					"request": {
 						"url": "{{host}}/api/v1/agencyUser/me",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "credentials",
+									"value": "LINK_ID:MY_GOV:jennifermaxims_identity_1",
+									"type": "text",
+									"enabled": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Search (NON-PROD)",
+					"request": {
+						"url": "{{host}}/api/v1/agencyUsers",
 						"method": "GET",
 						"header": [
 							{
@@ -75,7 +102,7 @@
 				{
 					"name": "Find AUSkey (EdTech)",
 					"request": {
-						"url": "{{host}}/api/v1/auskey/10000000001-device-1",
+						"url": "{{host}}/api/v1/auskey/10000000001-DEVICE-1",
 						"method": "GET",
 						"header": [],
 						"body": {
@@ -1077,9 +1104,9 @@
 					"response": []
 				},
 				{
-					"name": "Create",
+					"name": "Create by invitation code",
 					"request": {
-						"url": "{{host}}/api/v1/relationship-by-invitation",
+						"url": "{{host}}/api/v1/relationship",
 						"method": "POST",
 						"header": [
 							{
@@ -1090,7 +1117,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"relationshipType\": \"UNIVERSAL_REPRESENTATIVE\",\n  \"subjectIdValue\": \"LINK_ID:MY_GOV:jennifermaxims_identity_1\",\n  \"delegate\": {\n    \"partyType\": \"INDIVIDUAL\",\n    \"givenName\": \"Bob\",\n    \"familyName\": \"Smith\",\n    \"sharedSecretTypeCode\": \"DATE_OF_BIRTH\",\n    \"sharedSecretValue\": \" \",\n    \"identityType\": \"INVITATION_CODE\"\n  },\n  \"startTimestamp\": \"2016-07-11\",\n  \"endTimestamp\": null,\n  \"attributes\": [\n    {\n      \"code\": \"DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND\",\n      \"value\": \"\"\n    }\n  ]\n}"
+							"raw": "{\n    \"relationshipType\": {\n        \"href\": \"/api/v1/relationshipType/UNIVERSAL_REPRESENTATIVE\"\n    },\n    \"subject\": {\n        \"href\": \"/api/v1/party/identity/PUBLIC_IDENTIFIER%3AABN%3A00000000001\"\n    },\n    \"delegate\": {\n        \"value\": {\n            \"_links\": [\n            ],\n            \"partyType\": \"INDIVIDUAL\",\n            \"identities\": [\n                {\n                    \"href\": \"\",\n                    \"value\": {\n                        \"_links\": [\n                        ],\n                        \"identityType\": \"INVITATION_CODE\",\n                        \"defaultInd\": true,\n                        \"profile\": {\n                            \"provider\": \"INVITATION\",\n                            \"name\": {\n                                \"givenName\": \"Bob\",\n                                \"familyName\": \"Smith\"\n                            },\n                            \"sharedSecrets\": [ {\n                                \"value\": \"2000-01-01\",\n                                \"sharedSecretType\": {\n                                    \"code\": \"DATE_OF_BIRTH\"\n                                }\n                            }]\n                        }\n                    }\n                }\n            ]\n        }\n    },\n    \"startTimestamp\": \"2016-08-28T14:00:00.000Z\",\n    \"status\": \"ACCEPTED\",\n    \"initiatedBy\": \"SUBJECT\",\n    \"attributes\": [\n        {\n            \"value\": [\n                \"true\"\n            ],\n            \"attributeName\": {\n                \"href\": \"/api/v1/relationshipAttributeName/PERMISSION_CUSTOMISATION_ALLOWED_IND\",\n                \"value\": {\n                    \"code\": \"PERMISSION_CUSTOMISATION_ALLOWED_IND\",\n                    \"shortDecodeText\": \"Permission Customisation Allowed Indicator\",\n                    \"longDecodeText\": \"Permission Customisation Allowed Indicator\",\n                    \"startTimestamp\": \"2016-08-28T14:00:00.000Z\",\n                    \"name\": \"Permission Customisation Allowed Indicator\",\n                    \"domain\": \"BOOLEAN\",\n                    \"classifier\": \"OTHER\",\n                    \"category\": null,\n                    \"permittedValues\": []\n                }\n            }\n        },\n        {\n            \"value\": [\n                \"true\"\n            ],\n            \"attributeName\": {\n                \"href\": \"/api/v1/relationshipAttributeName/DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND\",\n                \"value\": {\n                    \"code\": \"DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND\",\n                    \"shortDecodeText\": \"Do you want this representative to manage authorisations for this organisation?\",\n                    \"longDecodeText\": \"(This includes the ability to create, view, modify and cancel authorisations)\",\n                    \"startTimestamp\": \"2016-08-28T14:00:00.000Z\",\n                    \"name\": \"Do you want this representative to manage authorisations for this organisation?\",\n                    \"domain\": \"BOOLEAN\",\n                    \"classifier\": \"OTHER\",\n                    \"category\": null,\n                    \"permittedValues\": []\n                }\n            }\n        },\n        {\n            \"value\": [\n                \"true\"\n            ],\n            \"attributeName\": {\n                \"href\": \"/api/v1/relationshipAttributeName/DELEGATE_RELATIONSHIP_TYPE_DECLARATION\",\n                \"value\": {\n                    \"code\": \"DELEGATE_RELATIONSHIP_TYPE_DECLARATION\",\n                    \"shortDecodeText\": \"Delegate Relationship Type Declaration\",\n                    \"longDecodeText\": \"Delegate Relationship Type Declaration\",\n                    \"startTimestamp\": \"2016-08-28T14:00:00.000Z\",\n                    \"name\": \"Delegate Relationship Type Declaration\",\n                    \"domain\": \"MARKDOWN\",\n                    \"classifier\": \"OTHER\",\n                    \"category\": null,\n                    \"permittedValues\": []\n                }\n            }\n        },\n        {\n            \"value\": [\n                \"true\"\n            ],\n            \"attributeName\": {\n                \"href\": \"/api/v1/relationshipAttributeName/SUBJECT_RELATIONSHIP_TYPE_DECLARATION\",\n                \"value\": {\n                    \"code\": \"SUBJECT_RELATIONSHIP_TYPE_DECLARATION\",\n                    \"shortDecodeText\": \"Subject Relationship Type Declaration\",\n                    \"longDecodeText\": \"Subject Relationship Type Declaration\",\n                    \"startTimestamp\": \"2016-08-28T14:00:00.000Z\",\n                    \"name\": \"Subject Relationship Type Declaration\",\n                    \"domain\": \"MARKDOWN\",\n                    \"classifier\": \"OTHER\",\n                    \"category\": null,\n                    \"permittedValues\": []\n                }\n            }\n        }\n    ]\n}"
 						}
 					},
 					"response": []

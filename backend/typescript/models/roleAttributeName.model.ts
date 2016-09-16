@@ -32,7 +32,7 @@ export class RoleAttributeNameDomain extends RAMEnum {
         RoleAttributeNameDomain.SelectMulti
     ];
 
-    constructor(code:string, shortDecodeText:string) {
+    constructor(code: string, shortDecodeText: string) {
         super(code, shortDecodeText);
     }
 }
@@ -49,7 +49,7 @@ export class RoleAttributeNameClassifier extends RAMEnum {
         RoleAttributeNameClassifier.Permission
     ];
 
-    constructor(code:string, shortDecodeText:string) {
+    constructor(code: string, shortDecodeText: string) {
         super(code, shortDecodeText);
     }
 }
@@ -80,7 +80,11 @@ const RoleAttributeNameSchema = CodeDecodeSchema({
     },
     permittedValues: [{
         type: String
-    }]
+    }],
+    appliesToInstance: {
+        type: Boolean,
+        required: [true, 'Applies to Instance is required'],
+    }
 });
 
 // instance ...........................................................................................................
@@ -92,9 +96,10 @@ export interface IRoleAttributeName extends ICodeDecode {
     category?: string;
     purposeText: string;
     permittedValues: string[];
+    appliesToInstance: boolean;
     domainEnum(): RoleAttributeNameDomain;
     isInDateRange(): boolean;
-    toHrefValue(includeValue:boolean): Promise<HrefValue<DTO>>;
+    toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>>;
     toDTO(): Promise<DTO>;
 }
 
@@ -105,6 +110,7 @@ class RoleAttributeName extends CodeDecode implements IRoleAttributeName {
     public category: string;
     public purposeText: string;
     public permittedValues: string[];
+    public appliesToInstance: boolean;
 
     public domainEnum(): RoleAttributeNameDomain {
         return RoleAttributeNameDomain.valueOf(this.domain);
@@ -115,7 +121,7 @@ class RoleAttributeName extends CodeDecode implements IRoleAttributeName {
         return this.startDate <= date && (this.endDate === null || this.endDate === undefined || this.endDate >= date);
     }
 
-    public async toHrefValue(includeValue:boolean): Promise<HrefValue<DTO>> {
+    public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
         return new HrefValue(
             await Url.forRoleAttributeName(this),
             includeValue ? await this.toDTO() : undefined
@@ -133,7 +139,8 @@ class RoleAttributeName extends CodeDecode implements IRoleAttributeName {
             this.domain,
             this.classifier,
             this.category,
-            this.permittedValues
+            this.permittedValues,
+            this.appliesToInstance
         );
     }
 
@@ -150,7 +157,7 @@ export class RoleAttributeNameModel {
         return RoleAttributeNameMongooseModel.create(source);
     }
 
-    public static findByCodeIgnoringDateRange(code: string): Promise<IRoleAttributeName> {
+    public static async findByCodeIgnoringDateRange(code: string): Promise<IRoleAttributeName> {
         return RoleAttributeNameMongooseModel
             .findOne({
                 code: code
@@ -158,7 +165,7 @@ export class RoleAttributeNameModel {
             .exec();
     }
 
-    public static findByCodeInDateRange(code: string, date: Date): Promise<IRoleAttributeName> {
+    public static async findByCodeInDateRange(code: string, date: Date): Promise<IRoleAttributeName> {
         return RoleAttributeNameMongooseModel
             .findOne({
                 code: code,
@@ -168,14 +175,14 @@ export class RoleAttributeNameModel {
             .exec();
     }
 
-    public static listIgnoringDateRange(): Promise<IRoleAttributeName[]> {
+    public static async listIgnoringDateRange(): Promise<IRoleAttributeName[]> {
         return RoleAttributeNameMongooseModel
             .find({})
             .sort({name: 1})
             .exec();
     }
 
-    public static listInDateRange(date: Date): Promise<IRoleAttributeName[]> {
+    public static async listInDateRange(date: Date): Promise<IRoleAttributeName[]> {
         return RoleAttributeNameMongooseModel
             .find({
                 startDate: {$lte: date},

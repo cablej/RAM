@@ -1,14 +1,13 @@
 <page-header [identity]="identity"
              tab="MANAGE_ROLES"
-             [messages]="globalMessages"
-             [giveAuthorisationsEnabled]="giveAuthorisationsEnabled"></page-header>
+             [messages]="globalMessages"></page-header>
 
 <form [formGroup]="form">
 
     <!-- ROLE TYPE SELECTOR WHEN CREATING A NEW ROLE -->
     <div class="panel panel-default" *ngIf="!roleHref">
         <div class="panel-heading">
-            <h4>Select a role</h4>
+            <h4><span class="badge square">1</span> Select a role</h4>
         </div>
         <div class="panel-body">
             <div class="form-group">
@@ -24,7 +23,7 @@
     <!-- ROLE TYPE DISPLAY IF EDITING AN EXISTING ROLE -->
     <div class="panel panel-default" *ngIf="roleHref">
         <div class="panel-heading">
-            <h4>Role Type</h4>
+            <h4><span class="badge square">1</span> Role Type</h4>
         </div>
         <div class="panel-body">
             {{ role?.roleType?.value?.shortDecodeText }}
@@ -34,7 +33,7 @@
     <!-- AGENCIES ALLOCATED TO THE ROLE -->
     <div class="panel panel-default" *ngIf="role?.roleType">
         <div class="panel-heading">
-            <h4>Online software provider agencies services</h4>
+            <h4><span class="badge square">2</span> Online software provider agencies services</h4>
         </div>
         <div class="panel-body">
                 <h4>Access to government agencies services</h4>
@@ -73,14 +72,14 @@
                             </div>
                         </td>
                     </tr>
-                    </tbody>
+                    </tbody>r
                 </table>
         </div>
     </div>
 
     <div class="panel panel-default" *ngIf="role?.roleType">
         <div class="panel-heading">
-            <h4>Online software provider preferences</h4>
+            <h4><span class="badge square">3</span> Online software provider preferences</h4>
         </div>
         <div class="panel-body">
             <div class="form-group">
@@ -122,9 +121,9 @@
 
 <div id="action-button-bar">
     <div class="pull-left">
-        <a class="btn btn-default align-center" (click)="back()">← Back</a>
+        <button class="btn btn-default align-center" (click)="back()">← {{'back' | translate}}</button>
     </div>
     <div class="pull-right">
-        <a class="btn btn-primary align-center" (click)="save()">Save →</a>
+        <button class="btn btn-primary align-center" (click)="save()">{{'save' | translate}} →</button>
     </div>
 </div>

@@ -1,9 +1,9 @@
 import * as mongoose from 'mongoose';
 import {RAMSchema, IRAMObject, RAMObject, Model} from './base';
-import {
-    HrefValue,
-    Name as DTO
-} from '../../../commons/api';
+import {Name as DTO} from '../../../commons/api';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
 // mongoose ...........................................................................................................
 
@@ -59,7 +59,6 @@ export interface IName extends IRAMObject {
     familyName?: string;
     unstructuredName?: string;
     _displayName?: string;
-    toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>>;
     toDTO(): Promise<DTO>;
 }
 
@@ -70,11 +69,8 @@ class Name extends RAMObject implements IName {
     public unstructuredName: string;
     public _displayName: string;
 
-    public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
-        return new HrefValue(
-            null, // TODO do these have endpoints?
-            includeValue ? await this.toDTO() : undefined
-        );
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.iname, PermissionEnforcers.iname);
     }
 
     public async toDTO(): Promise<DTO> {

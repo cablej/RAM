@@ -4,8 +4,8 @@ import {Validators, REACTIVE_FORM_DIRECTIVES, FormBuilder, FormGroup, FORM_DIREC
 
 import {AbstractPageComponent} from '../abstract-page/abstract-page.component';
 import {PageHeaderAuthComponent} from '../../components/page-header/page-header-auth.component';
+import {Constants} from '../../../../commons/constants';
 import {RAMServices} from '../../services/ram-services';
-import {RAMConstants} from '../../services/ram-constants.service';
 
 import {IIdentity} from '../../../../commons/api';
 
@@ -17,9 +17,8 @@ import {IIdentity} from '../../../../commons/api';
 
 export class EnterInvitationCodeComponent extends AbstractPageComponent {
 
-    public idValue: string;
+    public identityHref: string;
 
-    public giveAuthorisationsEnabled: boolean = true; // todo need to set this
     public identity: IIdentity;
 
     public form: FormGroup;
@@ -32,17 +31,18 @@ export class EnterInvitationCodeComponent extends AbstractPageComponent {
     public onInit(params: {path:Params, query:Params}) {
 
         // extract path and query parameters
-        this.idValue = params.path['idValue'];
+        this.identityHref = params.path['identityHref'];
 
         // message
         const msg = params.query['msg'];
-        if (msg === RAMConstants.GlobalMessage.INVALID_CODE) {
+        if (msg === Constants.GlobalMessage.INVALID_CODE) {
             this.addGlobalMessage('The code you have entered does not exist or is invalid.');
         }
 
         // identity in focus
-        this.services.rest.findIdentityByValue(this.idValue).subscribe((identity) => {
-            this.identity = identity;
+        this.services.rest.findIdentityByHref(this.identityHref).subscribe({
+            next: this.onFindIdentity.bind(this),
+            error: this.onServerError.bind(this)
         });
 
         // forms
@@ -52,13 +52,18 @@ export class EnterInvitationCodeComponent extends AbstractPageComponent {
 
     }
 
+    public onFindIdentity(identity: IIdentity) {
+        this.identity = identity;
+    }
+
     public activateCode(event: Event) {
 
+        // todo need to discuss with architects to change this api so the href doesn't require the code and we can use HATEOAS?
         this.services.rest.claimRelationshipByInvitationCode(this.form.controls['relationshipCode'].value)
             .subscribe((relationship) => {
                 this.services.route.goToRelationshipAcceptPage(
-                    this.idValue,
-                    this.form.controls['relationshipCode'].value
+                    this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity),
+                    this.services.model.getLinkHrefByType(Constants.Link.SELF, relationship)
                 );
             }, (err) => {
                 const status = err.status;
@@ -75,7 +80,7 @@ export class EnterInvitationCodeComponent extends AbstractPageComponent {
 
     public goToRelationshipsPage() {
         this.services.route.goToRelationshipsPage(
-            this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.identity)
+            this.services.model.getLinkHrefByType(Constants.Link.SELF, this.identity)
         );
     };
 

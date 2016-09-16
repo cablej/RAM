@@ -16,7 +16,7 @@
             <td>{{services.model.displayName(relationshipRef.value.delegateNickName)}}</td>
             <td>{{services.model.relationshipStatusLabel(relationshipStatusRefs, relationshipRef.value.status)}}</td>
             <td></td>
-            <td><a class="btn btn-sm btn-secondary align-center" (click)="goToEditNotificationPage(relationshipRef)" *ngIf="isEditNotificationEnabled(relationshipRef)">Manage <span class="caret"></span></a></td>
+            <td><a class="btn btn-sm btn-secondary align-center" (click)="goToEditNotificationPage(relationshipRef)" *ngIf="isEditNotificationEnabled(relationshipRef)">{{'edit' | translate}}</a></td>
         </tr>
     </tbody>
     <tbody *ngIf="isLoading">

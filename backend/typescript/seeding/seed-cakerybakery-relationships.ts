@@ -19,6 +19,10 @@ export class CakeryBakeryRelationshipsSeeder {
 
             } else {
 
+                console.log(Seeder.delegateManageAuthorisationAllowedInd_relAttributeName);
+                console.log(Seeder.delegateRelationshipDeclaration_relAttributeName);
+                console.log(Seeder.subjectRelationshipDeclaration_relAttributeName);
+
                 Seeder.cakerybakery_and_jennifermaxims_relationship = await Seeder.createRelationshipModel({
                     relationshipType: Seeder.custom_delegate_relationshipType,
                     subject: Seeder.cakerybakery_party,
@@ -31,19 +35,15 @@ export class CakeryBakeryRelationshipsSeeder {
                     attributes: [
                         await Seeder.createRelationshipAttributeModel({
                             value: true,
-                            attributeName: Seeder.permissionCustomisationAllowedInd_relAttributeName
-                        } as any),
-                        await Seeder.createRelationshipAttributeModel({
-                            value: true,
                             attributeName: Seeder.delegateManageAuthorisationAllowedInd_relAttributeName
                         } as any),
                         await Seeder.createRelationshipAttributeModel({
-                            value: true,
-                            attributeName: Seeder.delegateRelationshipTypeDeclaration_relAttributeName
+                            value: '',
+                            attributeName: Seeder.delegateRelationshipDeclaration_relAttributeName
                         } as any),
                         await Seeder.createRelationshipAttributeModel({
-                            value: true,
-                            attributeName: Seeder.subjectRelationshipTypeDeclaration_relAttributeName
+                            value: '',
+                            attributeName: Seeder.subjectRelationshipDeclaration_relAttributeName
                         } as any)
                     ]
                 } as any);

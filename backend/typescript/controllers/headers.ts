@@ -46,7 +46,7 @@ export class Headers {
     public static LinkIdConsumer = `${Headers.Prefix}-linkidconsumer`;
     public static PublicIdentifierScheme = `${Headers.Prefix}-publicidentifierscheme`;
 
-    public static isXRAMHeader(headerName:string) {
+    public static isXRAMHeader(headerName: string) {
         return headerName.toLowerCase().startsWith(Headers.Prefix);
     }
 }

@@ -247,3 +247,27 @@ https://xgrommx.github.io/rx-book/
     * backend/dist
     * backend/node_modules
 
+
+Quick Start
+===========
+ 
+Prerequisites:
+ 
+ * Node 6.1.0
+ * Running Mongo instance
+ 
+To run locally for development:
+ 
+```
+ git clone https://github.com/atogov/RAM.git
+ cd RAM
+ 
+ ./ram deps
+ ./ram jspm
+ ./ram db:seed
+
+ ./ram start:backend 
+ ./ram start:frontend
+ 
+ open http://localhost:3001/dev/
+```

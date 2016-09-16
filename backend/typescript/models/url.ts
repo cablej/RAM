@@ -7,27 +7,27 @@ import * as relationshipType from './relationshipType.model';
 import * as role from './role.model';
 import * as roleAttributeName from './roleAttributeName.model';
 import * as roleType from './roleType.model';
-import {Link} from '../../../commons/api';
+import {ILink, Link} from '../../../commons/dtos/link.dto';
 
-export class UrlLinks {
+export class Links {
 
-    private array: Link[] = [];
+    private array: ILink[] = [];
 
-    public push(type: string, method: string, href: string, condition: boolean = true): UrlLinks {
+    public push(type: string, method: string, href: string, condition: boolean = true): Links {
         if (condition) {
             this.array.push(new Link(type, method, href));
         }
         return this;
     }
 
-    public pushLink(link: Link, condition: boolean = true): UrlLinks {
+    public pushLink(link: ILink, condition: boolean = true): Links {
         if (condition) {
             this.array.push(link);
         }
         return this;
     }
 
-    public toArray() {
+    public toArray(): ILink[] {
         return this.array;
     }
 
@@ -43,8 +43,8 @@ export class Url {
     public static POST = 'POST';
     public static PUT = 'PUT';
 
-    public static links(): UrlLinks {
-        return new UrlLinks();
+    public static links(): Links {
+        return new Links();
     }
 
     public static pathElements(url: string): string[] {
@@ -131,6 +131,10 @@ export class Url {
 
     public static async forRelationshipNotifyDelegate(invitationCode: string): Promise<string> {
         return '/api/v1/relationship/invitationCode/' + encodeURIComponent(invitationCode) + '/notifyDelegate';
+    }
+
+    public static async forRelationshipPrintInvitation(invitationCode: string): Promise<string> {
+        return '/api/v1/relationship/invitationCode/' + encodeURIComponent(invitationCode) + '/print';
     }
 
     // relationship attribute name ....................................................................................

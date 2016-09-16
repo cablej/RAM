@@ -3,19 +3,16 @@ import {RAMEnum, RAMSchema, IRAMObject, RAMObject, Model} from './base';
 import {Url} from './url';
 import {IName, NameModel} from './name.model';
 import {ISharedSecret, SharedSecretModel} from './sharedSecret.model';
-import {
-    HrefValue,
-    Profile as DTO,
-    ProfileProvider as ProfileProviderDTO
-} from '../../../commons/api';
+import {HrefValue, Profile as DTO, ProfileProvider as ProfileProviderDTO} from '../../../commons/api';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _NameModel = NameModel;
-
-/* tslint:disable:no-unused-variable */
 const _SharedSecretModel = SharedSecretModel;
+/* tslint:enable:no-unused-variable */
 
 // exports ............................................................................................................
 
@@ -26,8 +23,9 @@ let ProfileMongooseModel: mongoose.Model<IProfileDocument>;
 export class ProfileProvider extends RAMEnum {
 
     public static ABR = new ProfileProvider('ABR', 'ABR');
+    public static AUSkey = new ProfileProvider('AUSKEY', 'AUSkey');
     public static AuthenticatorApp = new ProfileProvider('AUTHENTICATOR_APP', 'Authenticator App');
-    public static Invitation = new ProfileProvider('INVITATION', 'Invitation'); // TODO validate for temp identities
+    public static Invitation = new ProfileProvider('INVITATION', 'Invitation');
     public static MyGov = new ProfileProvider('MY_GOV', 'myGov');
     public static SelfAsserted = new ProfileProvider('SELF_ASSERTED', 'Self Asserted');
     public static VanguardFAS = new ProfileProvider('VANGUARD_FAS', 'Vanguard FAS');
@@ -35,6 +33,7 @@ export class ProfileProvider extends RAMEnum {
 
     protected static AllValues = [
         ProfileProvider.ABR,
+        ProfileProvider.AUSkey,
         ProfileProvider.AuthenticatorApp,
         ProfileProvider.Invitation,
         ProfileProvider.MyGov,
@@ -87,7 +86,6 @@ export interface IProfile extends IRAMObject {
     sharedSecrets: ISharedSecret[];
     providerEnum(): ProfileProvider;
     getSharedSecret(code: string): ISharedSecret;
-    toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>>;
     toDTO(): Promise<DTO>;
 }
 
@@ -112,11 +110,8 @@ class Profile extends RAMObject implements IProfile {
         return null;
     }
 
-    public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
-        return new HrefValue(
-            null, // TODO do these have endpoints?
-            includeValue ? await this.toDTO() : undefined
-        );
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.profile, PermissionEnforcers.profile);
     }
 
     public async toDTO(): Promise<DTO> {

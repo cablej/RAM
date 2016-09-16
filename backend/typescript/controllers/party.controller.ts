@@ -9,18 +9,18 @@ export class PartyController {
     constructor() {
     }
 
-    private findMe = async (req:Request, res:Response) => {
+    private findMe = async(req: Request, res: Response) => {
         const identity = res.locals[Headers.Identity];
         const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => identity ? PartyModel.findByIdentityIdValue(identity.idValue) : null)
+            .then((req: Request) => identity ? PartyModel.findByIdentityIdValue(identity.idValue) : null)
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private findByIdentityIdValue = (req:Request, res:Response) => {
+    private findByIdentityIdValue = (req: Request, res: Response) => {
         const schema = {
             'idValue': {
                 in: 'params',
@@ -29,14 +29,14 @@ export class PartyController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => PartyModel.findByIdentityIdValue(req.params.idValue))
+            .then((req: Request) => PartyModel.findByIdentityIdValue(req.params.idValue))
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private findTypeByCode = (req:Request, res:Response) => {
+    private findTypeByCode = (req: Request, res: Response) => {
         const schema = {
             'code': {
                 in: 'params',
@@ -45,25 +45,24 @@ export class PartyController {
             }
         };
         validateReqSchema(req, schema)
-            .then((req:Request) => PartyType.valueOf(req.params.code) as PartyType)
+            .then((req: Request) => PartyType.valueOf(req.params.code) as PartyType)
             .then((model) => model ? model.toDTO() : null)
             .then(sendResource(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    private listTypes = (req:Request, res:Response) => {
-        const schema = {
-        };
+    private listTypes = (req: Request, res: Response) => {
+        const schema = {};
         validateReqSchema(req, schema)
-            .then((req:Request) => PartyType.values() as PartyType[])
+            .then((req: Request) => PartyType.values() as PartyType[])
             .then((results) => results ? results.map((model) => model.toHrefValue(true)) : null)
             .then(sendList(res))
             .then(sendNotFoundError(res))
             .catch(sendError(res));
     };
 
-    public assignRoutes = (router:Router) => {
+    public assignRoutes = (router: Router) => {
 
         router.get('/v1/party/identity/me',
             context.begin,

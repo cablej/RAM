@@ -8,7 +8,7 @@ export default class AuthHelper {
     private rest = new RestCalls(config.host, config.port);
 
     public KNOWN_IDENTITIES = {
-        'jenscatering_identity_1': 'PUBLIC_IDENTIFIER:ABN:jenscateringABN',
+        'jenscatering_identity_1': 'PUBLIC_IDENTIFIER:ABN:00000000001',
         'jennifermaxims_identity_1': 'LINK_ID:MY_GOV:jennifermaxims_identity_1'
     };
 

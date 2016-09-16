@@ -2,6 +2,7 @@ import * as mongoose from 'mongoose';
 import * as colors from 'colors';
 import {conf} from '../bootstrap';
 import {doResetDataInMongo} from '../resetDataInMongo';
+import {Constants} from '../../../commons/constants';
 
 import {
     IRelationshipAttributeName,
@@ -117,6 +118,26 @@ const truncateString = (input:String):String => {
     return input && input.length > 60 ? (input.substring(0, 60) + '...') : input;
 };
 
+const getSubjectDeclaration = (): string => {
+    return `### This is a sample declaration text for the subject
+    
+* written in **markdown**
+* kept in database
+* relationshipTypeUsage.defaultValue
+* Use seed or admin UI to change it
+    `;
+};
+
+const getDelegateDeclaration = (): string => {
+    return `### This is a sample declaration text for the delegate
+    
+* written in **markdown**
+* kept in database
+* relationshipTypeUsage.defaultValue
+* Use seed or admin UI to change it
+    `;
+};
+
 // seeder .............................................................................................................
 
 /* tslint:disable:no-any */
@@ -139,12 +160,18 @@ export class Seeder {
     public static osp_delegate_relationshipType:IRelationshipType;
 
     // relationship attribute names (other)
+    public static managedExternallyInd_relAttributeName:IRelationshipAttributeName;
+    public static delegateEditOwnInd_relAttributeName:IRelationshipAttributeName;
+    public static autoAcceptIfInitiatedFromDelegateInd_relAttributeName:IRelationshipAttributeName;
+    public static autoAcceptIfInitiatedFromSubjectInd_relAttributeName:IRelationshipAttributeName;
     public static permissionCustomisationAllowedInd_relAttributeName:IRelationshipAttributeName;
     public static accessLevelsDescription_relAttributeName:IRelationshipAttributeName;
     public static delegateManageAuthorisationAllowedInd_relAttributeName:IRelationshipAttributeName;
     public static delegateManageAuthorisationUserConfigurableInd_relAttributeName:IRelationshipAttributeName;
     public static delegateRelationshipTypeDeclaration_relAttributeName:IRelationshipAttributeName;
+    public static delegateRelationshipDeclaration_relAttributeName:IRelationshipAttributeName;
     public static subjectRelationshipTypeDeclaration_relAttributeName:IRelationshipAttributeName;
+    public static subjectRelationshipDeclaration_relAttributeName:IRelationshipAttributeName;
     public static selectedGovernmentServicesList_relAttributeName:IRelationshipAttributeName; // for storing the selected services on an OSP relationship
     public static ssid_relAttributeName:IRelationshipAttributeName;
 
@@ -347,8 +374,7 @@ export class Seeder {
         }
     }
 
-    public static async createRelationshipAttributeNameUsageModels
-    <T extends { attribute:IRelationshipAttributeName, optionalInd:boolean, defaultValue:string, sortOrder:number}>(attributeValues:T[]) {
+    public static async createRelationshipAttributeNameUsageModels <T extends { attribute:IRelationshipAttributeName, optionalInd:boolean, defaultValue:string, sortOrder:number}>(attributeValues:T[]) {
         const attributeNameUsages:IRelationshipAttributeNameUsage[] = [];
         if (attributeValues) {
             for (let i = 0; i < attributeValues.length; i = i + 1) {
@@ -367,8 +393,7 @@ export class Seeder {
         return attributeNameUsages;
     }
 
-    public static async createRelationshipTypeModel
-    <T extends { attribute:IRelationshipAttributeName, optionalInd:boolean, defaultValue:string, sortOrder:number}>
+    public static async createRelationshipTypeModel <T extends { attribute:IRelationshipAttributeName, optionalInd:boolean, defaultValue:string, sortOrder:number}>
     (values:IRelationshipType, attributeValues:T[]) {
         const code = values.code;
         const existingModel = await RelationshipTypeModel.findByCodeIgnoringDateRange(code);
@@ -402,8 +427,7 @@ export class Seeder {
         }
     }
 
-    public static async createRoleAttributeNameUsageModels
-    <T extends { attribute:IRoleAttributeName, optionalInd:boolean, defaultValue:string}>(attributeValues:T[]) {
+    public static async createRoleAttributeNameUsageModels <T extends { attribute:IRoleAttributeName, optionalInd:boolean, defaultValue:string}>(attributeValues:T[]) {
         const attributeNameUsages:IRoleAttributeNameUsage[] = [];
         if (attributeValues) {
             for (let i = 0; i < attributeValues.length; i = i + 1) {
@@ -421,9 +445,7 @@ export class Seeder {
         return attributeNameUsages;
     }
 
-    public static async createRoleTypeModel
-    <T extends { attribute:IRoleAttributeName, optionalInd:boolean, defaultValue:string}>
-    (values:IRoleType, attributeValues:T[]) {
+    public static async createRoleTypeModel <T extends { attribute: IRoleAttributeName, optionalInd: boolean, defaultValue: string}>(values: IRoleType, attributeValues: T[]) {
         const code = values.code;
         const existingModel = await RoleTypeModel.findByCodeIgnoringDateRange(code);
         if (existingModel === null) {
@@ -523,7 +545,7 @@ export class Seeder {
         if (values.attributes) {
             for (let attribute of values.attributes) {
                 let value:string[] = attribute.value;
-                const truncatedValue = truncateString(value.toString());
+                const truncatedValue = truncateString(value ? value.toString() : '');
                 Seeder.log(`  - ${attribute.attributeName.code} (${truncatedValue})`.green);
             }
         }
@@ -567,15 +589,69 @@ export class Seeder {
 
             Seeder.log('\nInserting Relationship Attribute Names (other):\n'.underline);
 
+            Seeder.managedExternallyInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
+                code: Constants.RelationshipAttributeNameCode.MANAGED_EXTERNALLY_IND,
+                shortDecodeText: 'External Truth Store Indicator',
+                longDecodeText: 'External Truth Store Indicator',
+                startDate: now,
+                domain: RelationshipAttributeNameDomain.Null.code,
+                classifier: RelationshipAttributeNameClassifier.Other.code,
+                category: null,
+                purposeText: 'Indicator of whether this relationship type is sourced from an external truth store',
+                permittedValues: null,
+                appliesToInstance: false
+            } as any);
+
+            Seeder.delegateEditOwnInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
+                code: Constants.RelationshipAttributeNameCode.DELEGATE_EDIT_OWN_IND,
+                shortDecodeText: 'Delegate Edit Own Indicator',
+                longDecodeText: 'Delegate Edit Own Indicator',
+                startDate: now,
+                domain: RelationshipAttributeNameDomain.Null.code,
+                classifier: RelationshipAttributeNameClassifier.Other.code,
+                category: null,
+                purposeText: 'Indicator of whether this relationship type allows the delegate to edit their own instance',
+                permittedValues: null,
+                appliesToInstance: false
+            } as any);
+
+            Seeder.autoAcceptIfInitiatedFromDelegateInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
+                code: Constants.RelationshipAttributeNameCode.AUTOACCEPT_IF_INITIATED_FROM_DELEGATE_IND,
+                shortDecodeText: 'Auto Accept If Initiated From Delegate Indicator',
+                longDecodeText: 'Auto Accept If Initiated From Delegate Indicator',
+                startDate: now,
+                domain: RelationshipAttributeNameDomain.Null.code,
+                classifier: RelationshipAttributeNameClassifier.Other.code,
+                category: null,
+                purposeText: 'Indicator of whether a relationship should be auto accepted if initiated from delegate',
+                permittedValues: null,
+                appliesToInstance: false
+            } as any);
+
+            Seeder.autoAcceptIfInitiatedFromSubjectInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
+                code: Constants.RelationshipAttributeNameCode.AUTOACCEPT_IF_INITIATED_FROM_SUBJECT_IND,
+                shortDecodeText: 'Auto Accept If Initiated From Subject Indicator',
+                longDecodeText: 'Auto Accept If Initiated From Subject Indicator',
+                startDate: now,
+                domain: RelationshipAttributeNameDomain.Null.code,
+                classifier: RelationshipAttributeNameClassifier.Other.code,
+                category: null,
+                purposeText: 'Indicator of whether a relationship should be auto accepted if initiated from subject',
+                permittedValues: null,
+                appliesToInstance: false
+            } as any);
+
             Seeder.permissionCustomisationAllowedInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
                 code: 'PERMISSION_CUSTOMISATION_ALLOWED_IND',
                 shortDecodeText: 'Permission Customisation Allowed Indicator',
                 longDecodeText: 'Permission Customisation Allowed Indicator',
                 startDate: now,
-                domain: RelationshipAttributeNameDomain.Boolean.code,
+                domain: RelationshipAttributeNameDomain.Null.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Indicator of whether a relationship type allows the user to customise permission levels'
+                purposeText: 'Indicator of whether a relationship type allows the user to customise permission levels',
+                permittedValues: null,
+                appliesToInstance: false
             } as any);
 
             Seeder.accessLevelsDescription_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -586,18 +662,20 @@ export class Seeder {
                 domain: RelationshipAttributeNameDomain.Null.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Descriptive text to explain the permission attribute access levels'
+                purposeText: 'Descriptive text to explain the permission attribute access levels',
+                appliesToInstance: false
             } as any);
 
             Seeder.delegateManageAuthorisationAllowedInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
-                code: 'DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND',
+                code: Constants.RelationshipAttributeNameCode.DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND,
                 shortDecodeText: 'Do you want this representative to manage authorisations for this organisation?',
                 longDecodeText: '(This includes the ability to create, view, modify and cancel authorisations)',
                 startDate: now,
                 domain: RelationshipAttributeNameDomain.Boolean.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Indicator of whether a relationship allows the delegate to manage authorisations'
+                purposeText: 'Indicator of whether a relationship allows the delegate to manage authorisations',
+                appliesToInstance: true
             } as any);
 
             Seeder.delegateManageAuthorisationUserConfigurableInd_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -608,7 +686,8 @@ export class Seeder {
                 domain: RelationshipAttributeNameDomain.Null.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Indicator of whether the user can change the manage authorisations value (DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND)'
+                purposeText: 'Indicator of whether the user can change the manage authorisations value (DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND)',
+                appliesToInstance: false
             } as any);
 
             Seeder.delegateRelationshipTypeDeclaration_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -619,7 +698,20 @@ export class Seeder {
                 domain: RelationshipAttributeNameDomain.Markdown.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Delegate specific declaration in Markdown for a relationship type'
+                purposeText: 'Delegate specific declaration in Markdown for a relationship type',
+                appliesToInstance: false
+            } as any);
+
+            Seeder.delegateRelationshipDeclaration_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
+                code: 'DELEGATE_RELATIONSHIP_DECLARATION',
+                shortDecodeText: 'Delegate Relationship Declaration Record',
+                longDecodeText: 'Delegate Relationship Declaration Record',
+                startDate: now,
+                domain: RelationshipAttributeNameDomain.Markdown.code,
+                classifier: RelationshipAttributeNameClassifier.Other.code,
+                category: null,
+                purposeText: 'A record of the delegate specific declaration in Markdown that was accepted by the user',
+                appliesToInstance: true
             } as any);
 
             Seeder.subjectRelationshipTypeDeclaration_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -630,7 +722,20 @@ export class Seeder {
                 domain: RelationshipAttributeNameDomain.Markdown.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Subject specific declaration in Markdown for a relationship type'
+                purposeText: 'Subject specific declaration in Markdown for a relationship type',
+                appliesToInstance: false
+            } as any);
+
+            Seeder.subjectRelationshipDeclaration_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
+                code: 'SUBJECT_RELATIONSHIP_DECLARATION',
+                shortDecodeText: 'Subject Relationship Declaration Record',
+                longDecodeText: 'Subject Relationship Declaration Record',
+                startDate: now,
+                domain: RelationshipAttributeNameDomain.Markdown.code,
+                classifier: RelationshipAttributeNameClassifier.Other.code,
+                category: null,
+                purposeText: 'A record of the subject specific declaration in Markdown that was accepted by the user',
+                appliesToInstance: true
             } as any);
 
             Seeder.ssid_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -641,7 +746,8 @@ export class Seeder {
                 domain: RelationshipAttributeNameDomain.String.code,
                 classifier: RelationshipAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Software serial number'
+                purposeText: 'Software serial number',
+                appliesToInstance: true
             } as any);
 
         } catch (e) {
@@ -666,7 +772,8 @@ export class Seeder {
                 classifier: RelationshipAttributeNameClassifier.Permission.code,
                 category: permissionServices_category,
                 purposeText: 'A permission for a relationship',
-                permittedValues: Seeder.accessLevels
+                permittedValues: Seeder.accessLevels,
+                appliesToInstance: true
             } as any);
 
             Seeder.administrativeServices_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -678,7 +785,8 @@ export class Seeder {
                 classifier: RelationshipAttributeNameClassifier.Permission.code,
                 category: permissionServices_category,
                 purposeText: 'A permission for a relationship',
-                permittedValues: Seeder.accessLevels
+                permittedValues: Seeder.accessLevels,
+                appliesToInstance: true
             } as any);
 
             Seeder.stateRevenueServices_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -690,7 +798,8 @@ export class Seeder {
                 classifier: RelationshipAttributeNameClassifier.Permission.code,
                 category: permissionServices_category,
                 purposeText: 'A permission for a relationship',
-                permittedValues: Seeder.accessLevels
+                permittedValues: Seeder.accessLevels,
+                appliesToInstance: true
             } as any);
 
             Seeder.intermediariesAndQualifiedServices_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -702,7 +811,8 @@ export class Seeder {
                 classifier: RelationshipAttributeNameClassifier.Permission.code,
                 category: permissionServices_category,
                 purposeText: 'A permission for a relationship',
-                permittedValues: Seeder.accessLevels
+                permittedValues: Seeder.accessLevels,
+                appliesToInstance: true
             } as any);
 
             Seeder.licenseAndRegistrationServices_relAttributeName = await Seeder.createRelationshipAttributeNameModel({
@@ -714,7 +824,8 @@ export class Seeder {
                 classifier: RelationshipAttributeNameClassifier.Permission.code,
                 category: permissionServices_category,
                 purposeText: 'A permission for a relationship',
-                permittedValues: Seeder.accessLevels
+                permittedValues: Seeder.accessLevels,
+                appliesToInstance: true
             } as any);
 
             const ospServices_category = 'OSP Services';
@@ -728,7 +839,8 @@ export class Seeder {
                 classifier: RelationshipAttributeNameClassifier.AgencyService.code,
                 category: ospServices_category,
                 purposeText: 'Selected Services for OSP',
-                permittedValues: null
+                permittedValues: null,
+                appliesToInstance: true
             } as any);
 
         } catch (e) {
@@ -750,7 +862,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Software serial number'
+                purposeText: 'Software serial number',
+                appliesToInstance: true
             } as any);
 
             Seeder.usi_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -761,7 +874,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.AgencyService.code,
                 category: 'EDUCATION',
-                purposeText: 'Unique Student Identifier (USI)'
+                purposeText: 'Unique Student Identifier (USI)',
+                appliesToInstance: true
             } as any);
 
             Seeder.sbr_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -772,7 +886,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.AgencyService.code,
                 category: 'TAX',
-                purposeText: 'Standard Business Reporting (SBR) - ATO'
+                purposeText: 'Standard Business Reporting (SBR) - ATO',
+                appliesToInstance: true
             } as any);
 
             Seeder.preferredName_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -783,7 +898,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Preferred Name'
+                purposeText: 'Preferred Name',
+                appliesToInstance: true
             } as any);
 
             Seeder.creatorId_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -794,7 +910,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Creator Id'
+                purposeText: 'Creator Id',
+                appliesToInstance: true
             } as any);
 
             Seeder.creatorName_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -805,7 +922,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Creator Name'
+                purposeText: 'Creator Name',
+                appliesToInstance: true
             } as any);
 
             Seeder.creatorAgency_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -816,7 +934,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.String.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Creator Agency'
+                purposeText: 'Creator Agency',
+                appliesToInstance: true
             } as any);
 
             Seeder.deviceAuskeys_roleAttributeName = await Seeder.createRoleAttributeNameModel({
@@ -827,7 +946,8 @@ export class Seeder {
                 domain: RoleAttributeNameDomain.SelectMulti.code,
                 classifier: RoleAttributeNameClassifier.Other.code,
                 category: null,
-                purposeText: 'Device Auskeys'
+                purposeText: 'Device Auskeys',
+                appliesToInstance: true
             } as any);
 
         } catch (e) {
@@ -846,25 +966,19 @@ export class Seeder {
                 shortDecodeText: 'Associate',
                 longDecodeText: 'Associate',
                 startDate: now,
+                strength: 200,
                 minIdentityStrength: 2,
-                managedExternallyInd: true,
-                autoAcceptIfInitiatedFromDelegate: false,
-                autoAcceptIfInitiatedFromSubject: false,
                 category: RelationshipTypeCategory.Authorisation.code
             } as any, [
+                {attribute: Seeder.managedExternallyInd_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
+                {attribute: Seeder.delegateEditOwnInd_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.permissionCustomisationAllowedInd_relAttributeName, optionalInd: false, defaultValue: 'false', sortOrder: 1},
                 {attribute: Seeder.accessLevelsDescription_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.delegateManageAuthorisationAllowedInd_relAttributeName, optionalInd: false, defaultValue: 'true', sortOrder: 2},
-                {attribute: Seeder.delegateRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: 'Markdown for Delegate Universal Representative Declaration', sortOrder: 3},
-                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: `# This is declaration text
-
-* written in markdown
-* kept in database
-* relationshipTypeUsage.defaultValue
-* Use seed or admin UI to change it
-                    `, sortOrder: 4},
+                {attribute: Seeder.delegateRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 3},
+                {attribute: Seeder.delegateRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getDelegateDeclaration(), sortOrder: 3},
+                {attribute: Seeder.subjectRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 4},
+                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getSubjectDeclaration(), sortOrder: 4},
                 {attribute: Seeder.taxSuperServices_relAttributeName, optionalInd: false, defaultValue: Seeder.full_accessLevel, sortOrder: 5},
                 {attribute: Seeder.administrativeServices_relAttributeName, optionalInd: false, defaultValue: Seeder.full_accessLevel, sortOrder: 6},
                 {attribute: Seeder.stateRevenueServices_relAttributeName, optionalInd: false, defaultValue: Seeder.full_accessLevel, sortOrder: 7},
@@ -877,19 +991,18 @@ export class Seeder {
                 shortDecodeText: 'Universal Representative',
                 longDecodeText: 'The same level of authorisation as an Associate of the organisation (e.g., Owner, Director). All permissions will be defaulted to maximum access.',
                 startDate: now,
+                strength: 200,
                 minIdentityStrength: 2,
-                managedExternallyInd: false,
-                autoAcceptIfInitiatedFromDelegate: false,
-                autoAcceptIfInitiatedFromSubject: false,
                 category: RelationshipTypeCategory.Authorisation.code
             } as any, [
+                {attribute: Seeder.delegateEditOwnInd_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.permissionCustomisationAllowedInd_relAttributeName, optionalInd: false, defaultValue: 'false', sortOrder: 1},
                 {attribute: Seeder.accessLevelsDescription_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.delegateManageAuthorisationAllowedInd_relAttributeName, optionalInd: false, defaultValue: 'true', sortOrder: 2},
-                {attribute: Seeder.delegateRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: 'Markdown for Delegate Universal Representative Declaration', sortOrder: 3},
-                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: 'Markdown for Subject Universal Representative Declaration', sortOrder: 4},
+                {attribute: Seeder.delegateRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 3},
+                {attribute: Seeder.delegateRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getDelegateDeclaration(), sortOrder: 3},
+                {attribute: Seeder.subjectRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 4},
+                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getSubjectDeclaration(), sortOrder: 4},
                 {attribute: Seeder.taxSuperServices_relAttributeName, optionalInd: false, defaultValue: Seeder.full_accessLevel, sortOrder: 5},
                 {attribute: Seeder.administrativeServices_relAttributeName, optionalInd: false, defaultValue: Seeder.full_accessLevel, sortOrder: 6},
                 {attribute: Seeder.stateRevenueServices_relAttributeName, optionalInd: false, defaultValue: Seeder.full_accessLevel, sortOrder: 7},
@@ -903,20 +1016,18 @@ export class Seeder {
                 longDecodeText: `Select the representative authorisation type if you want to customise access.
                 Select which permissions this representative will have, including restricting access to some services.`,
                 startDate: now,
+                strength: 100,
                 minIdentityStrength: 1,
-                managedExternallyInd: false,
-                autoAcceptIfInitiatedFromDelegate: false,
-                autoAcceptIfInitiatedFromSubject: false,
                 category: RelationshipTypeCategory.Authorisation.code
             } as any, [
                 {attribute: Seeder.permissionCustomisationAllowedInd_relAttributeName, optionalInd: false, defaultValue: 'true', sortOrder: 1},
                 {attribute: Seeder.accessLevelsDescription_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.delegateManageAuthorisationAllowedInd_relAttributeName, optionalInd: false, defaultValue: 'false', sortOrder: 2},
                 {attribute: Seeder.delegateManageAuthorisationUserConfigurableInd_relAttributeName, optionalInd: false, defaultValue: 'false', sortOrder: -1},
-                {attribute: Seeder.delegateRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: 'Markdown for Delegate Custom Representative Declaration', sortOrder: 3},
-                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: 'Markdown for Subject Custom Representative Declaration', sortOrder: 4},
+                {attribute: Seeder.delegateRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 3},
+                {attribute: Seeder.delegateRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getDelegateDeclaration(), sortOrder: 3},
+                {attribute: Seeder.subjectRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 4},
+                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getSubjectDeclaration(), sortOrder: 4},
                 {attribute: Seeder.taxSuperServices_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 5},
                 {attribute: Seeder.administrativeServices_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 6},
                 {attribute: Seeder.stateRevenueServices_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 7},
@@ -930,21 +1041,13 @@ export class Seeder {
                 longDecodeText: 'Online Software Provider',
                 startDate: now,
                 minIdentityStrength: 0,
-                managedExternallyInd: false,
-                autoAcceptIfInitiatedFromDelegate: true,
-                autoAcceptIfInitiatedFromSubject: false,
                 category: RelationshipTypeCategory.Notification.code
             } as any, [
+                {attribute: Seeder.autoAcceptIfInitiatedFromSubjectInd_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.selectedGovernmentServicesList_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 1},
                 {attribute: Seeder.ssid_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 2},
-                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false,
-                    defaultValue: `# This is declaration text
-
-* written in markdown
-* kept in database
-* relationshipTypeUsage.defaultValue
-* Use seed or admin UI to change it
-                    `, sortOrder: 3}
+                {attribute: Seeder.subjectRelationshipDeclaration_relAttributeName, optionalInd: false, defaultValue: null, sortOrder: 3},
+                {attribute: Seeder.subjectRelationshipTypeDeclaration_relAttributeName, optionalInd: false, defaultValue: getSubjectDeclaration(), sortOrder: 3}
             ]);
 
         } catch (e) {

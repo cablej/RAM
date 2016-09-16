@@ -23,12 +23,15 @@ import {
 } from '../../../commons/api';
 import {context} from '../providers/context.provider';
 import {logger} from '../logger';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
+// force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
 /* tslint:disable:no-unused-variable */
 const _RoleAttributeModel = RoleAttributeModel;
-
-/* tslint:disable:no-unused-variable */
 const _RelationshipTypeModel = RelationshipTypeModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -84,6 +87,7 @@ export interface IParty extends IRAMObject {
     addRelationship2(relationshipDTO: IRelationshipDTO): Promise<IRelationship>;
     addOrModifyRole(role: RoleDTO, agencyUser: IAgencyUser): Promise<IRole>;
     modifyRole(role: RoleDTO): Promise<IRole>;
+    findDefaultIdentity(): Promise<IIdentity>;
 }
 
 class Party extends RAMObject implements IParty {
@@ -92,6 +96,10 @@ class Party extends RAMObject implements IParty {
 
     public partyTypeEnum(): PartyType {
         return PartyType.valueOf(this.partyType) as PartyType;
+    }
+
+    public async getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.party, PermissionEnforcers.party);
     }
 
     public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
@@ -228,23 +236,29 @@ class Party extends RAMObject implements IParty {
 
         const roleAttributes: IRoleAttribute[] = [];
 
+        // add or update attribute
         let processAttribute = async(code: string, value: string[], roleAttributes: IRoleAttribute[], role: IRole) => {
             const roleAttributeName = await RoleAttributeNameModel.findByCodeIgnoringDateRange(code);
             if (roleAttributeName) {
-                const filteredRoleAttributes: IRoleAttribute[] = role.attributes.filter((item) => {
-                    return item.attributeName.code === code;
-                });
-                const roleAttributeDoesNotExist = filteredRoleAttributes.length === 0;
-                if (roleAttributeDoesNotExist) {
-                    roleAttributes.push(await RoleAttributeModel.create({
-                        value: value,
-                        attributeName: roleAttributeName
-                    }));
+                if (roleAttributeName.appliesToInstance) {
+                    const filteredRoleAttributes: IRoleAttribute[] = role.attributes.filter((item) => {
+                        return item.attributeName.code === code;
+                    });
+                    const roleAttributeDoesNotExist = filteredRoleAttributes.length === 0;
+                    if (roleAttributeDoesNotExist) {
+                        roleAttributes.push(await RoleAttributeModel.create({
+                            value: value,
+                            attributeName: roleAttributeName
+                        }));
+                    } else {
+                        const filteredRoleAttribute = filteredRoleAttributes[0];
+                        filteredRoleAttribute.value = value;
+                        await filteredRoleAttribute.save();
+                        roleAttributes.push(filteredRoleAttribute);
+                    }
                 } else {
-                    const filteredRoleAttribute = filteredRoleAttributes[0];
-                    filteredRoleAttribute.value = value;
-                    await filteredRoleAttribute.save();
-                    roleAttributes.push(filteredRoleAttribute);
+                    logger.warn('Role attribute name does not apply to instance');
+                    throw new Error('400');
                 }
             }
         };
@@ -325,7 +339,6 @@ class Party extends RAMObject implements IParty {
         for (let roleAttribute of roleDTO.attributes) {
             const roleAttributeValue = roleAttribute.value;
             const roleAttributeNameCode = roleAttribute.attributeName.value.code;
-            const roleAttributeNameCategory = roleAttribute.attributeName.value.category;
 
             const existingAttributeName = await RoleAttributeNameModel.findByCodeIgnoringDateRange(roleAttributeNameCode);
 
@@ -379,6 +392,10 @@ class Party extends RAMObject implements IParty {
         return Promise.resolve(role);
     }
 
+    public async findDefaultIdentity(): Promise<IIdentity> {
+        return IdentityModel.findDefaultByPartyId(this.id);
+    }
+
 }
 
 interface IPartyDocument extends IParty, mongoose.Document {
@@ -392,15 +409,18 @@ export class PartyModel {
         return PartyMongooseModel.create(source);
     }
 
+    public static async findById(id: string): Promise<IParty> {
+        return await PartyMongooseModel.findById(id);
+    }
+
     public static async findByIdentityIdValue(idValue: string): Promise<IParty> {
-        const identity = await
-            IdentityModel.findByIdValue(idValue);
+        const identity = await IdentityModel.findByIdValue(idValue);
         return identity ? identity.party : null;
     }
 
-    public static async hasAccess(requestedIdValue: string, requestingPrincipal: IPrincipal, requestingIdentity: IIdentity): Promise<boolean> {
-        const requestedIdentity = await
-            IdentityModel.findByIdValue(requestedIdValue);
+    public static async hasAccess(requestedIdValue: string, requestingPrincipal: IPrincipal): Promise<boolean> {
+        const requestedIdentity = await IdentityModel.findByIdValue(requestedIdValue);
+        const requestingIdentity = requestingPrincipal ? requestingPrincipal.identity : null;
         if (requestedIdentity) {
             // requested party exists
             if (requestingPrincipal && requestingPrincipal.agencyUserInd) {
@@ -415,16 +435,44 @@ export class PartyModel {
                     return true;
                 } else {
                     // check 1st and 2nd level relationships
-                    return await
-                        RelationshipModel.hasActiveInDateRange1stOr2ndLevelConnection(
-                            requestingParty,
-                            requestedIdValue,
-                            new Date()
-                        );
+                    return await RelationshipModel.hasActiveInDateRange1stOr2ndLevelConnection(
+                        requestingParty,
+                        requestedIdValue,
+                        new Date()
+                    );
                 }
             }
         }
         return false;
+    }
+
+    public static async computeConnectionStrength(requestedIdValue: string, requestingPrincipal: IPrincipal): Promise<number> {
+        const maxStrength = Number.MAX_SAFE_INTEGER;
+        const requestedIdentity = await IdentityModel.findByIdValue(requestedIdValue);
+        const requestingIdentity = requestingPrincipal ? requestingPrincipal.identity : null;
+        if (requestedIdentity) {
+            // requested party exists
+            if (requestingPrincipal && requestingPrincipal.agencyUserInd) {
+                // agency users have implicit global access
+                return maxStrength;
+            } else if (requestingIdentity) {
+                // regular users have explicit access
+                let requestingParty = requestingIdentity.party;
+                const requestedParty = requestedIdentity.party;
+                if (requestingParty.id === requestedParty.id) {
+                    // requested and requester are the same
+                    return maxStrength;
+                } else {
+                    // check 1st and 2nd level relationships
+                    return await RelationshipModel.computeConnectionStrength(
+                        requestingParty,
+                        requestedIdValue,
+                        new Date()
+                    );
+                }
+            }
+        }
+        return 0;
     }
 
     public static populate(listOfIds: Object[], options: {path: string}) {

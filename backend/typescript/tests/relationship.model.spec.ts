@@ -1,22 +1,26 @@
-import {connectDisconnectMongo} from './helpers';
+import {connectDisconnectMongo, login} from './helpers';
 import {Seeder} from '../seeding/seed';
 import {
     IIdentity,
     IdentityModel,
     IdentityType,
     IdentityLinkIdScheme,
-    IdentityInvitationCodeStatus} from '../models/identity.model';
+    IdentityInvitationCodeStatus
+} from '../models/identity.model';
 import {
     IName,
-    NameModel} from '../models/name.model';
+    NameModel
+} from '../models/name.model';
 import {
     IProfile,
     ProfileModel,
-    ProfileProvider} from '../models/profile.model';
+    ProfileProvider
+} from '../models/profile.model';
 import {
     IParty,
     PartyModel,
-    PartyType} from '../models/party.model';
+    PartyType
+} from '../models/party.model';
 import {
     IRelationship,
     RelationshipModel,
@@ -31,19 +35,19 @@ describe('RAM Relationship', () => {
 
     connectDisconnectMongo();
 
-    let relationshipTypeCustom:IRelationshipType;
+    let relationshipTypeCustom: IRelationshipType;
 
-    let subjectNickName1:IName;
-    let subjectProfile1:IProfile;
-    let subjectParty1:IParty;
-    let subjectIdentity1:IIdentity;
+    let subjectNickName1: IName;
+    let subjectProfile1: IProfile;
+    let subjectParty1: IParty;
+    let subjectIdentity1: IIdentity;
 
-    let delegateNickName1:IName;
-    let delegateProfile1:IProfile;
-    let delegateParty1:IParty;
-    let delegateIdentity1:IIdentity;
+    let delegateNickName1: IName;
+    let delegateProfile1: IProfile;
+    let delegateParty1: IParty;
+    let delegateIdentity1: IIdentity;
 
-    let relationship1:IRelationship;
+    let relationship1: IRelationship;
 
     beforeEach((done) => {
 
@@ -53,7 +57,7 @@ describe('RAM Relationship', () => {
             .then()
             .then(Seeder.resetDataInMongo)
             .then(Seeder.loadReference)
-            .then(async () => {
+            .then(async() => {
 
                 try {
                     context.init();
@@ -124,11 +128,11 @@ describe('RAM Relationship', () => {
                 }
 
             }).then(()=> {
-                done();
-            });
+            done();
+        });
     });
 
-    it('finds by identifier', async (done) => {
+    it('finds by identifier', async(done) => {
         try {
 
             const retrievedInstance = await RelationshipModel.findByIdentifier(relationship1.id);
@@ -145,7 +149,28 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('auto converts strings to dates', async (done) => {
+    it('converts to DTO', async(done) => {
+        try {
+
+            login(subjectIdentity1);
+
+            const retrievedInstance = await RelationshipModel.findByIdentifier(relationship1.id);
+
+            expect(retrievedInstance).not.toBeNull();
+
+            const dto = await retrievedInstance.toDTO();
+
+            expect(dto).not.toBeNull();
+
+            done();
+
+        } catch (e) {
+            fail(e);
+            done();
+        }
+    });
+
+    it('auto converts strings to dates', async(done) => {
         try {
 
             const retrievedInstance = await RelationshipModel.findByIdentifier(relationship1.id);
@@ -170,7 +195,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('finds by invitation code in date range', async (done) => {
+    it('finds by invitation code in date range', async(done) => {
         try {
 
             const retrievedInstance = await RelationshipModel.findPendingByInvitationCodeInDateRange(
@@ -190,7 +215,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('inserts with no end timestamp', async (done) => {
+    it('inserts with no end timestamp', async(done) => {
         try {
 
             const instance = await RelationshipModel.create({
@@ -221,7 +246,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('inserts with end timestamp', async (done) => {
+    it('inserts with end timestamp', async(done) => {
         try {
 
             const instance = await RelationshipModel.create({
@@ -290,6 +315,9 @@ describe('RAM Relationship', () => {
             expect(preClaimedDelegateIdentity.invitationCodeStatusEnum()).toBe(IdentityInvitationCodeStatus.Pending);
 
             // perform claim
+
+            login(claimingDelegateIdentity1);
+
             await relationshipToClaim.claimPendingInvitation(claimingDelegateIdentity1, invitationCode);
             const retrievedClaimedInstance = await RelationshipModel.findByIdentifier(relationshipToClaim.id);
 
@@ -309,7 +337,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('accepts pending invitation', async (done) => {
+    it('accepts pending invitation', async(done) => {
         try {
 
             const invitationCodeIdentity = await IdentityModel.createInvitationCodeIdentity('John', 'Delegate 1', '01/01/1999');
@@ -337,6 +365,8 @@ describe('RAM Relationship', () => {
                 strength: 2
             });
 
+            login(acceptingDelegateIdentity1);
+
             await relationshipToAccept.claimPendingInvitation(acceptingDelegateIdentity1, invitationCodeIdentity.rawIdValue);
             const acceptedInstance = await relationshipToAccept.acceptPendingInvitation(acceptingDelegateIdentity1);
             const retrievedAcceptedInstance = await RelationshipModel.findByIdentifier(relationshipToAccept.id);
@@ -357,8 +387,10 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('stores email when notifying delegate', async (done) => {
+    it('stores email when notifying delegate', async(done) => {
         try {
+
+            login(subjectIdentity1);
 
             const email = 'test@example.com';
             await relationship1.notifyDelegate(email, subjectIdentity1);
@@ -375,7 +407,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('fails accept non-pending invitation', async (done) => {
+    it('fails accept non-pending invitation', async(done) => {
         try {
 
             const acceptingDelegateIdentity1 = await IdentityModel.create({
@@ -386,6 +418,8 @@ describe('RAM Relationship', () => {
                 profile: delegateProfile1,
                 party: delegateParty1
             });
+
+            login(acceptingDelegateIdentity1);
 
             await relationship1.acceptPendingInvitation(acceptingDelegateIdentity1);
             expect(relationship1.statusEnum()).toBe(RelationshipStatus.Accepted);
@@ -400,13 +434,13 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('rejects pending invitation', async (done) => {
+    it('rejects pending invitation', async(done) => {
 
         try {
 
             const invitationCodeIdentity = await IdentityModel.createInvitationCodeIdentity('John', 'Delegate 1', '01/01/1999');
             const relationshipToReject = await RelationshipModel.add(
-                 relationshipTypeCustom,
+                relationshipTypeCustom,
                 subjectParty1,
                 subjectNickName1,
                 invitationCodeIdentity.party,
@@ -428,6 +462,8 @@ describe('RAM Relationship', () => {
                 strength: 2
             });
 
+            login(acceptingDelegateIdentity1);
+
             await relationshipToReject.claimPendingInvitation(acceptingDelegateIdentity1, invitationCodeIdentity.rawIdValue);
 
             await relationshipToReject.rejectPendingInvitation(acceptingDelegateIdentity1);
@@ -445,7 +481,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('fails reject non-pending invitation', async (done) => {
+    it('fails reject non-pending invitation', async(done) => {
         try {
 
             await relationship1.rejectPendingInvitation(delegateIdentity1);
@@ -461,7 +497,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches with subject', async (done) => {
+    it('searches with subject', async(done) => {
         try {
 
             const relationships = await RelationshipModel.search(subjectIdentity1.idValue, null, 1, 10);
@@ -477,7 +513,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('fails searches with non-existent subject', async (done) => {
+    it('fails searches with non-existent subject', async(done) => {
         try {
 
             const relationships = await RelationshipModel.search('__BOGUS__', null, 1, 10);
@@ -492,7 +528,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches with delegate', async (done) => {
+    it('searches with delegate', async(done) => {
         try {
 
             const relationships = await RelationshipModel.search(null, delegateIdentity1.idValue, 1, 10);
@@ -508,7 +544,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('fails searches with non-existent delegate', async (done) => {
+    it('fails searches with non-existent delegate', async(done) => {
         try {
 
             const relationships = await RelationshipModel.search(null, '__BOGUS__', 1, 10);
@@ -523,7 +559,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches with subject as party', async (done) => {
+    it('searches with subject as party', async(done) => {
         try {
 
             const relationships = await RelationshipModel.searchByIdentity(subjectIdentity1.idValue,
@@ -540,7 +576,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches with delegate as party', async (done) => {
+    it('searches with delegate as party', async(done) => {
         try {
 
             const relationships = await RelationshipModel.searchByIdentity(delegateIdentity1.idValue,
@@ -557,7 +593,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches with subject as party with good filters', async (done) => {
+    it('searches with subject as party with good filters', async(done) => {
         try {
 
             const relationships = await RelationshipModel.searchByIdentity(subjectIdentity1.idValue,
@@ -574,7 +610,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches with subject as party with bad filters', async (done) => {
+    it('searches with subject as party with bad filters', async(done) => {
         try {
 
             const relationships = await RelationshipModel.searchByIdentity(subjectIdentity1.idValue,
@@ -590,7 +626,7 @@ describe('RAM Relationship', () => {
         }
     });
 
-    it('searches distinct subjects with delegate', async (done) => {
+    it('searches distinct subjects with delegate', async(done) => {
         try {
 
             // create another relationship to the same parties

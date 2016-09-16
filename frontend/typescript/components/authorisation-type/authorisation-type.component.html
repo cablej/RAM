@@ -1,29 +1,37 @@
 <div class="panel panel-default">
+
     <div class="panel-heading">
         <h4><span class="badge square">2</span> {{'addRelationship.authType.heading' | translate}}</h4>
     </div>
+
     <div class="panel-body">
         <div class="form-group">
-            <form [formGroup]="form">
-                <div class="col-md-12" [class.has-error]="!form.controls['authType'].valid">
-                    <h4 class="padding-btn-30">{{'addRelationship.authType.whatType' | translate}}</h4>
+            <form [formGroup]="form?.group">
 
+                <div class="col-md-12" [class.has-error]="!form.group.controls['authType'].valid">
+
+                    <h4 class="padding-btn-10">{{'addRelationship.authType.whatType' | translate}}</h4>
                     <h4>{{'addRelationship.authType' | translate}}*</h4>
-                    <select class="form-control" [formControl]="form.controls['authType']" #t (change)="onAuthTypeChange(t.value)">
+                    <select class="form-control" [formControl]="form.group.controls['authType']" #t (change)="onAuthTypeChange(t.value)">
                         <option value="-" disabled>{{'pleaseChoose' | translate}}</option>
                         <option *ngFor="let item of options" value={{item.value.code}}>{{item.value.shortDecodeText}}</option>
                     </select>
+
                     <br/>
-                    <div *ngIf="selectedAuthType">
+
+                    <div *ngIf="data.authType">
                         <h4>{{'addRelationship.authType.notes' | translate}}</h4>
-                        <p><strong>{{selectedAuthType.value.shortDecodeText}}</strong></p>
-                        <p>{{selectedAuthType.value.longDecodeText}}</p>
-                        <br/>
+                        <blockquote>
+                            <p><strong>{{data.authType.value.shortDecodeText}}</strong></p>
+                            <p>{{data.authType.value.longDecodeText}}</p>
+                        </blockquote>
                     </div>
 
                 </div>
+
             </form>
         </div>
         <div class="clearfix"></div>
     </div>
+
 </div>

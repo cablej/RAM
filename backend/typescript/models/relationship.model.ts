@@ -1,6 +1,7 @@
-import {logger} from '../logger';
 import * as mongoose from 'mongoose';
 import {Model, RAMEnum, RAMSchema, IRAMObject, RAMObject, Query, Assert} from './base';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 import {Url} from './url';
 import {SharedSecretModel, ISharedSecret} from './sharedSecret.model';
 import {DOB_SHARED_SECRET_TYPE_CODE, SharedSecretTypeModel} from './sharedSecretType.model';
@@ -8,8 +9,9 @@ import {IParty, PartyModel, PartyType} from './party.model';
 import {IName, NameModel} from './name.model';
 import {IRelationshipType, RelationshipTypeModel} from './relationshipType.model';
 import {IRelationshipAttribute, RelationshipAttributeModel} from './relationshipAttribute.model';
-import {RelationshipAttributeNameModel, RelationshipAttributeNameClassifier} from './relationshipAttributeName.model';
+import {RelationshipAttributeNameModel, RelationshipAttributeNameClassifier, IRelationshipAttributeName} from './relationshipAttributeName.model';
 import {ProfileProvider} from './profile.model';
+import {Constants} from '../../../commons/constants';
 import {
     IdentityModel,
     IIdentity,
@@ -17,32 +19,31 @@ import {
     IdentityInvitationCodeStatus,
     IdentityPublicIdentifierScheme
 } from './identity.model';
-import {context} from '../providers/context.provider';
 import {
     HrefValue,
     Relationship as DTO,
     RelationshipStatus as RelationshipStatusDTO,
     RelationshipAttribute as RelationshipAttributeDTO,
+    RelationshipAttributeName as RelationshipAttributeNameDTO,
     SearchResult
 } from '../../../commons/api';
-import {Translator} from '../ram/translator';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {IdentityCanCreateRelationshipPermissionEnforcer} from '../permissions/identityCanCreateRelationshipPermission.enforcer';
+import {RelationshipCanClaimPermissionEnforcer} from '../permissions/relationshipCanClaimPermission.enforcer';
+import {RelationshipCanNotifyDelegatePermissionEnforcer} from '../permissions/relationshipCanNotifyDelegatePermission.enforcer';
+import {RelationshipCanRejectPermissionEnforcer} from '../permissions/relationshipCanRejectPermission.enforcer';
+import {RelationshipCanAcceptPermissionEnforcer} from '../permissions/relationshipCanAcceptPermission.enforcer';
+import {RelationshipCanModifyPermissionEnforcer} from '../permissions/relationshipCanModifyPermission.enforcer';
+import {Utils} from '../../../commons/utils';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _PartyModel = PartyModel;
-
-/* tslint:disable:no-unused-variable */
 const _NameModel = NameModel;
-
-/* tslint:disable:no-unused-variable */
 const _RelationshipAttributeModel = RelationshipAttributeModel;
-
-/* tslint:disable:no-unused-variable */
 const _RelationshipAttributeNameModel = RelationshipAttributeNameModel;
-
-/* tslint:disable:no-unused-variable */
 const _RelationshipTypeModel = RelationshipTypeModel;
+/* tslint:enable:no-unused-variable */
 
 const MAX_PAGE_SIZE = 10;
 
@@ -61,6 +62,7 @@ export class RelationshipStatus extends RAMEnum {
     public static Pending = new RelationshipStatus('PENDING', 'Pending');
     public static Revoked = new RelationshipStatus('REVOKED', 'Revoked');
     public static Suspended = new RelationshipStatus('SUSPENDED', 'Suspended');
+    public static Superseded = new RelationshipStatus('SUPERSEDED', 'Superseded');
 
     protected static AllValues = [
         RelationshipStatus.Accepted,
@@ -69,7 +71,8 @@ export class RelationshipStatus extends RAMEnum {
         RelationshipStatus.Deleted,
         RelationshipStatus.Pending,
         RelationshipStatus.Revoked,
-        RelationshipStatus.Suspended
+        RelationshipStatus.Suspended,
+        RelationshipStatus.Superseded
     ];
 
     constructor(code: string, shortDecodeText: string) {
@@ -110,6 +113,11 @@ const RelationshipSchema = RAMSchema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'RelationshipType',
         required: [true, 'Relationship Type is required']
+    },
+    strength: {
+        type: Number,
+        required: [true, 'Strength is required'],
+        default: 0
     },
     subject: {
         type: mongoose.Schema.Types.ObjectId,
@@ -166,6 +174,14 @@ const RelationshipSchema = RAMSchema({
         trim: true,
         enum: RelationshipInitiatedBy.valueStrings()
     },
+    supersededBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Relationship'
+    },
+    supersedes: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Relationship'
+    },
     attributes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'RelationshipAttribute'
@@ -221,6 +237,9 @@ RelationshipSchema.pre('validate', function (next: () => void) {
         this._relationshipTypeCode = this.relationshipType.code;
     }
     if (this.relationshipType) {
+        this.strength = this.relationshipType.strength;
+    }
+    if (this.relationshipType) {
         this._relationshipTypeCategory = this.relationshipType.category;
     }
     if (this.subjectNickName) {
@@ -265,6 +284,7 @@ RelationshipSchema.pre('validate', function (next: () => void) {
 export interface IRelationship extends IRAMObject {
     id: string;
     relationshipType: IRelationshipType;
+    strength: number;
     subject: IParty;
     subjectNickName: IName;
     delegate: IParty;
@@ -275,6 +295,8 @@ export interface IRelationship extends IRAMObject {
     endEventTimestamp?: Date;
     status: string;
     initiatedBy: string;
+    supersededBy: IRelationship;
+    supersedes: IRelationship;
     attributes: IRelationshipAttribute[];
     _subjectNickNameString: string;
     _delegateNickNameString: string;
@@ -287,18 +309,22 @@ export interface IRelationship extends IRAMObject {
     _delegateProfileProviderCodes: string[];
     statusEnum(): RelationshipStatus;
     toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>>;
-    toDTO(invitationCode: string): Promise<DTO>;
+    toDTO(): Promise<DTO>;
+    isPendingInvitation(): Promise<boolean>;
     claimPendingInvitation(claimingDelegateIdentity: IIdentity, invitationCode: string): Promise<IRelationship>;
     acceptPendingInvitation(acceptingDelegateIdentity: IIdentity): Promise<IRelationship>;
     rejectPendingInvitation(rejectingDelegateIdentity: IIdentity): Promise<IRelationship>;
     notifyDelegate(email: string, notifyingIdentity: IIdentity): Promise<IRelationship>;
-
+    modify(dto: DTO): Promise<IRelationship>;
+    getAttribute(code: string): Promise<IRelationshipAttribute>;
+    isManageAuthAllowed(): Promise<boolean>;
 }
 
 class Relationship extends RAMObject implements IRelationship {
 
     public id: string;
     public relationshipType: IRelationshipType;
+    public strength: number;
     public subject: IParty;
     public subjectNickName: IName;
     public delegate: IParty;
@@ -309,6 +335,8 @@ class Relationship extends RAMObject implements IRelationship {
     public endEventTimestamp: Date;
     public status: string;
     public initiatedBy: string;
+    public supersededBy: IRelationship;
+    public supersedes: IRelationship;
     public attributes: IRelationshipAttribute[];
     public _subjectNickNameString: string;
     public _delegateNickNameString: string;
@@ -324,26 +352,42 @@ class Relationship extends RAMObject implements IRelationship {
         return RelationshipStatus.valueOf(this.status) as RelationshipStatus;
     }
 
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.relationship, PermissionEnforcers.relationship);
+    }
+
     public async toHrefValue(includeValue: boolean): Promise<HrefValue<DTO>> {
         return new HrefValue(
             await Url.forRelationship(this),
-            includeValue ? await this.toDTO(null) : undefined
+            includeValue ? await this.toDTO() : undefined
         );
     }
 
-    public async toDTO(invitationCode?: string): Promise<DTO> {
-        const pendingWithInvitationCode = invitationCode && this.statusEnum() === RelationshipStatus.Pending;
+    public async toDTO(): Promise<DTO> {
 
-        // todo need to use security context to drive the links
+        // map attribute models to dtos
+        const attributeDTOs: RelationshipAttributeDTO[] = await Promise.all<RelationshipAttributeDTO>(
+            this.attributes.map(async(attribute: IRelationshipAttribute) => await attribute.toDTO())
+        );
+
+        // get relationship type attribute name usages which have appliesToInstance
+        const relationshipType = await RelationshipTypeModel.findByCodeIgnoringDateRange(this.relationshipType.code);
+        relationshipType.attributeNameUsages
+            .filter((attributeNameUsage) => attributeNameUsage.attributeName.appliesToInstance)
+            .forEach(async(attributeNameUsage) => {
+                const matchedAttributeDTO = attributeDTOs.find((attributeDTO: RelationshipAttributeDTO) => attributeNameUsage.attributeName.code === attributeDTO.attributeName.value.code);
+                if (!matchedAttributeDTO) {
+                    attributeDTOs.push(
+                        new RelationshipAttributeDTO(
+                            attributeNameUsage.defaultValue ? [attributeNameUsage.defaultValue] : [],
+                            new HrefValue(await Url.forRelationshipAttributeName(attributeNameUsage.attributeName), RelationshipAttributeNameDTO.build(attributeNameUsage.attributeName))
+                        )
+                    );
+                }
+            });
+
         return new DTO(
-            Url.links()
-                .push('self', Url.GET, await Url.forRelationship(this))
-                .push('claim', Url.POST, await Url.forRelationshipClaim(invitationCode), pendingWithInvitationCode)
-                .push('accept', Url.POST, await Url.forRelationshipAccept(invitationCode), pendingWithInvitationCode && this.canAccept())
-                .push('reject', Url.POST, await Url.forRelationshipReject(invitationCode), pendingWithInvitationCode)
-                .push('notifyDelegate', Url.POST, await Url.forRelationshipNotifyDelegate(invitationCode), pendingWithInvitationCode)
-                .push('modify', Url.PUT, await Url.forRelationship(this))
-                .toArray(),
+            await this.getPermissions(),
             await this.relationshipType.toHrefValue(false),
             await this.subject.toHrefValue(true),
             await this.subjectNickName.toDTO(),
@@ -354,147 +398,77 @@ class Relationship extends RAMObject implements IRelationship {
             this.endEventTimestamp,
             this.status,
             this.initiatedBy,
-            await Promise.all<RelationshipAttributeDTO>(this.attributes.map(
-                async(attribute: IRelationshipAttribute) => {
-                    return await attribute.toDTO();
-                }))
+            this.supersededBy ? await this.supersededBy.toHrefValue(false) : undefined,
+            attributeDTOs
         );
+    }
+
+    public async isPendingInvitation(): Promise<boolean> {
+        let invitationCode = this.invitationIdentity ? this.invitationIdentity.rawIdValue : undefined;
+        return invitationCode !== null && invitationCode !== undefined && this.statusEnum() === RelationshipStatus.Pending;
     }
 
     public async claimPendingInvitation(claimingDelegateIdentity: IIdentity, invitationCode: string): Promise<IRelationship> {
-            /* validate */
 
-            // validate current status
-            Assert.assertTrue(this.statusEnum() === RelationshipStatus.Pending, 'Unable to accept a non-pending relationship');
+        // evaluate permissions
+        await new RelationshipCanClaimPermissionEnforcer().assert(this);
 
-            // if the user is already the delegate then there is nothing to do
-            if (this.delegate.id === claimingDelegateIdentity.party.id) {
-                return this as IRelationship;
-            }
+        // if the user is already the delegate then there is nothing to do
+        if (this.delegate.id === claimingDelegateIdentity.party.id) {
+            return this as IRelationship;
+        }
 
-            // find identity to match user against
-            const invitationIdentities = await IdentityModel.listByPartyId(this.delegate._id);
-            Assert.assertTrue(
-                invitationIdentities.length === 1,
-                'A pending relationship should only have one delegate identity'
-            );
+        // ensure invitation code matches
+        Assert.assertTrue(
+            this.invitationIdentity.rawIdValue === invitationCode,
+            'Invitation code does not match'
+        );
 
-            Assert.assertTrue(
-                this.invitationIdentity.identityTypeEnum() === IdentityType.InvitationCode,
-                'Must be an invitation code to claim'
-            );
+        // mark invitation code identity as claimed
+        this.invitationIdentity.invitationCodeStatus = IdentityInvitationCodeStatus.Claimed.code;
+        this.invitationIdentity.invitationCodeClaimedTimestamp = new Date();
+        await this.invitationIdentity.save();
 
-            Assert.assertTrue(
-                this.invitationIdentity.rawIdValue === invitationCode,
-                'Invitation code does not match'
-            );
+        // point relationship to the accepting delegate identity
+        this.delegate = claimingDelegateIdentity.party;
+        await this.save();
 
-            Assert.assertTrue(
-                this.invitationIdentity.invitationCodeStatusEnum() === IdentityInvitationCodeStatus.Pending || this.invitationIdentity.invitationCodeStatusEnum() === IdentityInvitationCodeStatus.Claimed,
-                'Invitation code must be pending',
-                `${this.invitationIdentity.invitationCodeStatusEnum()} != PENDING or CLAIMED`
-            );
-            Assert.assertTrue(
-                this.invitationIdentity.invitationCodeExpiryTimestamp > new Date(),
-                'Invitation code has expired'
-            );
+        return this;
 
-            // check name
-            Assert.assertCaseInsensitiveEqual(
-                claimingDelegateIdentity.profile.name.givenName,
-                this.invitationIdentity.profile.name.givenName,
-                'Identity does not match',
-                `${claimingDelegateIdentity.profile.name.givenName} != ${this.invitationIdentity.profile.name.givenName}`
-            );
-
-            Assert.assertCaseInsensitiveEqual(
-                claimingDelegateIdentity.profile.name.familyName,
-                this.invitationIdentity.profile.name.familyName,
-                'Identity does not match',
-                `${claimingDelegateIdentity.profile.name.familyName} != ${this.invitationIdentity.profile.name.familyName}`
-            );
-
-            // TODO not sure about this implementation
-            // check date of birth IF it is recorded on the invitation
-            if (this.invitationIdentity.profile.getSharedSecret(DOB_SHARED_SECRET_TYPE_CODE)) {
-                //
-                // Assert.assertTrue(
-                //      acceptingDelegateIdentity.profile.getSharedSecret(DOB_SHARED_SECRET_TYPE_CODE)
-                //     identity.profile.getSharedSecret(DOB_SHARED_SECRET_TYPE_CODE).matchesValue(),
-                //     'Identity does not match');
-            }
-
-            // If we received ABN from headers (ie from AUSkey), check it against ABN in relationship
-            const abn = context.getAuthenticatedABN();
-            logger.debug('abn is <' + abn + '>');
-            if (abn) {
-                logger.info('checking abn <' + abn + '>');
-                const allIdentities = await IdentityModel.listByPartyId(this.subject.id);
-                let found: boolean = false;
-                for (let identity of allIdentities) {
-                    logger.info('abn for identity is ' + identity.rawIdValue);
-                    if (identity.rawIdValue === abn) {
-                        found = true;
-                    }
-                }
-                Assert.assertTrue(
-                    found,
-                    'You cannot accept an authorisation with an AUSkey from a different ABN. AUSkeys only have authorisation for the ABN they are issued under.'
-                );
-            }
-
-            /* complete claim */
-
-            // mark invitation code identity as claimed
-            this.invitationIdentity.invitationCodeStatus = IdentityInvitationCodeStatus.Claimed.code;
-            this.invitationIdentity.invitationCodeClaimedTimestamp = new Date();
-            await this.invitationIdentity.save();
-
-            // point relationship to the accepting delegate identity
-            this.delegate = claimingDelegateIdentity.party;
-            await this.save();
-            return Promise.resolve(this);
     }
 
     public async acceptPendingInvitation(acceptingDelegateIdentity: IIdentity): Promise<IRelationship> {
-        logger.debug('Attempting to accept relationship by ', acceptingDelegateIdentity.idValue);
 
-        Assert.assertTrue(this.statusEnum() === RelationshipStatus.Pending, 'Unable to accept a non-pending relationship');
-
-        // confirm the delegate is the user accepting
-        Assert.assertTrue(acceptingDelegateIdentity.party.id === this.delegate.id, 'Not allowed');
-
-        // check identity strength
-        logger.info(`checking strength -> identity=${acceptingDelegateIdentity.strength} relationshipType=${this.relationshipType.minIdentityStrength}`);
-        Assert.assertGreaterThanEqual(
-            acceptingDelegateIdentity.strength,
-            this.relationshipType.minIdentityStrength,
-            Translator.get('acceptRelationship.insufficientStrength'),
-            `${acceptingDelegateIdentity.strength} < ${this.relationshipType.minIdentityStrength}`
-        );
+        // evaluate permissions
+        await new RelationshipCanAcceptPermissionEnforcer().assert(this);
 
         // mark relationship as active
         this.status = RelationshipStatus.Accepted.code;
+
+        // if this relationship is superseding then end date superseded relationship
+        if (this.supersedes) {
+            const date = new Date();
+            date.setHours(0, 0, 0);
+
+            const supersededRelationship = await RelationshipModel.findByIdentifier(this.supersedes.toString());
+            supersededRelationship.status = RelationshipStatus.Superseded.code;
+            supersededRelationship.endTimestamp = date;
+            supersededRelationship.supersededBy = this;
+            await supersededRelationship.save();
+            this.startTimestamp = date;
+        }
         await this.save();
 
         // TODO notify relevant parties
 
-        return Promise.resolve(this as IRelationship);
-    }
+        return this;
 
-    // TODO need to include this as part of the PERMISSONS payload
-    // TODO refactor to have this logic only once
-    private canAccept(): boolean {
-        const acceptingDelegateIdentity = context.getAuthenticatedPrincipal().identity;
-        return (
-            this.statusEnum() === RelationshipStatus.Pending
-            && acceptingDelegateIdentity.party.id === this.delegate.id
-            && acceptingDelegateIdentity.strength >= this.relationshipType.minIdentityStrength
-        );
     }
 
     public async rejectPendingInvitation(rejectingDelegateIdentity: IIdentity): Promise<IRelationship> {
-        Assert.assertTrue(this.statusEnum() === RelationshipStatus.Pending, 'Unable to reject a non-pending relationship');
+
+        // evaluate permissions
+        await new RelationshipCanRejectPermissionEnforcer().assert(this);
 
         // confirm the delegate is the user accepting
         Assert.assertTrue(rejectingDelegateIdentity.party.id === this.delegate.id, 'Not allowed');
@@ -505,118 +479,169 @@ class Relationship extends RAMObject implements IRelationship {
 
         // TODO notify relevant parties
 
-        return this as IRelationship;
+        return this;
+
     }
 
     public async notifyDelegate(email: string, notifyingIdentity: IIdentity): Promise<IRelationship> {
-        const identity = this.invitationIdentity;
-        // TODO Assert that the user is an administrator of the subject
-        // Assert.assertEqual(notifyingIdentity.party.id, this.subject.id, 'Not allowed');
-        Assert.assertTrue(this.statusEnum() === RelationshipStatus.Pending, 'Unable to update relationship with delegate email');
-        Assert.assertTrue(identity.identityTypeEnum() === IdentityType.InvitationCode, 'Unable to update relationship with delegate email');
-        Assert.assertTrue(
-            identity.invitationCodeStatusEnum() === IdentityInvitationCodeStatus.Pending,
-            'Unable to update relationship with delegate email'
-        );
 
+        // evaluate permissions
+        await new RelationshipCanNotifyDelegatePermissionEnforcer().assert(this);
+
+        // update email address
+        const identity = this.invitationIdentity;
         identity.invitationCodeTemporaryEmailAddress = email;
         await identity.save();
 
         // TODO notify relevant parties
-        //logger.debug(`TODO Send notification to ${email}`);
 
-        return Promise.resolve(this as IRelationship);
+        return this;
+
     }
 
-}
+    public async modify(dto: DTO): Promise<IRelationship> {
 
-interface IRelationshipDocument extends IRelationship, mongoose.Document {
-}
+        // lookup identities, evaluate permissions on these
+        const subjectIdentity = await IdentityModel.findByIdValue(Url.lastPathElement(dto.subject.href));
+        const delegateIdentity = await IdentityModel.findByIdValue(Url.lastPathElement(dto.delegate.href));
 
-// static ..............................................................................................................
+        // update fields before permission evaluation
+        this.relationshipType = await RelationshipTypeModel.findByCodeIgnoringDateRange(Url.lastPathElement(dto.relationshipType.href));
+        this.subject = subjectIdentity.party;
+        this.delegate = delegateIdentity.party;
+        this.invitationIdentity = await this.mergeInvitationIdentityIfRequired(dto);
+        if (this.invitationIdentity) {
+            this.delegateNickName = this.invitationIdentity.profile.name;
+        }
+        this.attributes = await RelationshipModel.mergeAttributes(this.relationshipType, this.attributes, dto.attributes as RelationshipAttributeDTO[]);
+        this.startTimestamp = dto.startTimestamp;
+        this.endTimestamp = dto.endTimestamp;
 
-export class RelationshipModel {
+        // zero hours on timestamps
+        Utils.startOfDate(this.startTimestamp);
+        Utils.startOfDate(this.endTimestamp);
 
-    public static async create(source: IRelationship): Promise<IRelationship> {
-        return RelationshipMongooseModel.create(source);
+        // evaluate permissions
+        await new RelationshipCanModifyPermissionEnforcer().assert(this);
+
+        const originalRelationship = await RelationshipModel.findByIdentifier(this.id);
+        const startTimestampSame = Utils.startOfDate(originalRelationship.startTimestamp).getTime() === this.startTimestamp.getTime();
+        const startTimestampFutureDated = Utils.dateIsInFuture(this.startTimestamp);
+        const startTimestampNotGreaterThanToday = !Utils.dateIsTodayOrInFuture(this.startTimestamp);
+
+        // check accepted relationship start timestamp not changed into the past
+        if (this.statusEnum() === RelationshipStatus.Accepted && !startTimestampSame && startTimestampNotGreaterThanToday) {
+            throw new Error('400:Relationship access period start date can not be changed to a past date');
+        }
+
+        // check start date not greater than end date
+        if (this.endTimestamp && this.startTimestamp > this.endTimestamp) {
+            throw new Error('400:Relationship access period start date can not be greater than end date');
+        }
+
+        // if re-acceptance required, create new pending relationship
+        if (await this.isReAcceptanceRequired()) {
+            const supersededPendingRelationship = await RelationshipModel.createFromDto(dto);
+            const invitationIdentity = await IdentityModel.createInvitationCodeIdentity(this.delegateNickName.givenName, this.delegateNickName.familyName, null);
+            supersededPendingRelationship.delegate = invitationIdentity.party;
+            supersededPendingRelationship.invitationIdentity = invitationIdentity;
+            supersededPendingRelationship.supersedes = this;
+            return supersededPendingRelationship.save();
+        }
+
+        // if start date future dated and is accepted, create new accepted relationship
+        if (this.statusEnum() === RelationshipStatus.Accepted && !startTimestampSame && startTimestampFutureDated) {
+            this.endTimestamp = Utils.startOfToday();
+            this.status = RelationshipStatus.Cancelled.code;
+            await this.save();
+            const newFutureDatedAcceptedRelationship = await RelationshipModel.createFromDto(dto);
+            newFutureDatedAcceptedRelationship.status = RelationshipStatus.Accepted.code;
+            return newFutureDatedAcceptedRelationship.save();
+        }
+
+        // general flow - save relationship and cascade save on dependents
+        await this.save();
+        if (this.invitationIdentity) {
+            await this.invitationIdentity.profile.name.save();
+            await this.invitationIdentity.profile.save();
+            await this.invitationIdentity.save();
+        }
+        for (let attribute of this.attributes) {
+            await attribute.save();
+        }
+
+        return this;
     }
 
-    /* tslint:disable:max-func-body-length */
-    public static async addOrModify(identifier: string, dto: DTO): Promise<IRelationship> {
+    private async isReAcceptanceRequired(): Promise<boolean> {
+        let reAcceptanceRequired = false;
 
-        const myPrincipal = context.getAuthenticatedPrincipal();
-        const myIdentity = context.getAuthenticatedIdentity();
+        // re-acceptance can only happen while accepted
+        if (this.status === RelationshipStatus.Accepted.code) {
 
-        const isNewRelationship = !identifier;
+            // re-acceptance determined by comparing against original relationship
+            const originalRelationship = await RelationshipModel.findByIdentifier(this.id);
 
-        const relationshipTypeCode = Url.lastPathElement(dto.relationshipType.href);
-        Assert.assertNotNull(relationshipTypeCode, 'Relationship type code was empty', `Expected relationshipType href last element to be the code: ${dto.relationshipType.href}`);
+            // has relationship type been upgraded via the relationship strength
+            const minIdentityStrengthUpgraded = this.relationshipType.minIdentityStrength > originalRelationship.relationshipType.minIdentityStrength;
+            if (minIdentityStrengthUpgraded) {
+                console.info('Re-acceptance required due to relationship strength change');
+                reAcceptanceRequired = true;
+            }
 
-        const relationshipType = await RelationshipTypeModel.findByCodeIgnoringDateRange(relationshipTypeCode);
-        Assert.assertNotNull(relationshipType, 'Relationship type not found', `Expected relationship type with code with valid date: ${relationshipTypeCode}`);
+            // has authorisation management been changed from no to yes
+            const relationshipAttributeDelegateManageAuthorisationAllowedInd = await originalRelationship.getAttribute(Constants.RelationshipAttributeNameCode.DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND);
+            if (relationshipAttributeDelegateManageAuthorisationAllowedInd) {
+                if (relationshipAttributeDelegateManageAuthorisationAllowedInd.value[0] === 'false') {
+                    const dtoRelationshipAttributeDelegateManageAuthorisationAllowedInd = await this.getAttribute(Constants.RelationshipAttributeNameCode.DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND);
+                    if (dtoRelationshipAttributeDelegateManageAuthorisationAllowedInd) {
+                        if (dtoRelationshipAttributeDelegateManageAuthorisationAllowedInd.value[0] === 'true') {
+                            console.info('Re-acceptance required due to authorisation management upgrade');
+                            reAcceptanceRequired = true;
+                        }
+                    }
+                }
+            }
 
-        const initiatedBy = RelationshipInitiatedBy.valueOf(dto.initiatedBy);
-        let subjectIdentity: IIdentity;
-        let delegateIdentity: IIdentity;
-        let invitationIdentity: IIdentity;
-        let startTimestamp: Date;
-        let endTimestamp: Date;
-        let attributes: IRelationshipAttribute[] = [];
+            // have more government services been added
+            for (let attribute of this.attributes) {
+                if (attribute.attributeName.classifier === Constants.RelationshipAttributeNameClassifier.PERMISSION) {
 
-        let relationship: IRelationship;
-        if (!isNewRelationship) {
-            Assert.assertNotNull(identifier, 'Identifier not found');
+                    const originalAttribute = await originalRelationship.getAttribute(attribute.attributeName.code);
 
-            relationship = await RelationshipModel.findByIdentifier(identifier);
-            Assert.assertNotNull(relationship, 'Relationship not found');
+                    // service was added
+                    if (!originalAttribute) {
 
-            attributes = relationship.attributes;
+                        console.info('Re-acceptance required due addition of government service');
+                        reAcceptanceRequired = true;
+
+                    } else if (attribute.value && attribute.value.length > 0) {
+
+                        // has the permission been changed from limited to full
+                        const permittedValues = originalAttribute.attributeName.permittedValues;
+                        const originalPermissionAttributeValueIndex = permittedValues.findIndex((value: string) => value === originalAttribute.value[0]);
+                        const permissionAttributeValueIndex = permittedValues.findIndex((value: string) => value === attribute.value[0]);
+                        const attributeValueValid = permittedValues.find((value: string) => value === attribute.value[0]);
+                        if (attributeValueValid) {
+                            const previouslyHadNoValueButNowDoes = originalPermissionAttributeValueIndex === -1 && permissionAttributeValueIndex >= 0;
+                            if (previouslyHadNoValueButNowDoes) {
+                                console.info('Re-acceptance required due to upgrading of access level');
+                                reAcceptanceRequired = true;
+                            }
+                        }
+
+                    }
+
+                }
+            }
         }
 
-        const subjectIdValue = Url.lastPathElement(dto.subject.href);
-        if (subjectIdValue) {
-            subjectIdentity = await IdentityModel.findByIdValue(subjectIdValue);
-        }
+        return Promise.resolve(reAcceptanceRequired);
+    }
 
-        const delegateIdValue = Url.lastPathElement(dto.delegate.href);
-        if (delegateIdValue) {
-            delegateIdentity = await IdentityModel.findByIdValue(delegateIdValue);
-        }
-
-        // todo if new, start date can not be past only today and future
-        // todo if edit, start date can be future and past.
-        startTimestamp = dto.startTimestamp;
-
-        // todo end must be after start
-        endTimestamp = dto.endTimestamp;
-
-        // todo zero hours
-        // startTimestamp.setHours(0, 0, 0);
-        // if (endTimestamp) {
-        //     endTimestamp.setHours(0, 0, 0);
-        // }
-
-        const isSubjectCreatingRelationshipInvitation =
-            dto.initiatedBy === RelationshipInitiatedBy.Subject.code
-            && dto.delegate.value
-            && dto.delegate.value.partyType === PartyType.Individual.code
-            && dto.delegate.value.identities.length === 1
-            && dto.delegate.value.identities[0].value
-            && dto.delegate.value.identities[0].value.identityType === IdentityType.InvitationCode.code
-            && dto.delegate.value.identities[0].value.profile.provider === ProfileProvider.Invitation.code;
-
-        if (isSubjectCreatingRelationshipInvitation) {
-            const hasSharedSecretValue = dto.delegate.value.identities[0].value.profile.sharedSecrets
-                && dto.delegate.value.identities[0].value.profile.sharedSecrets.length === 1
-                && dto.delegate.value.identities[0].value.profile.sharedSecrets[0].value;
-
-            delegateIdentity = await IdentityModel.createInvitationCodeIdentity(
-                dto.delegate.value.identities[0].value.profile.name.givenName,
-                dto.delegate.value.identities[0].value.profile.name.familyName,
-                hasSharedSecretValue ? dto.delegate.value.identities[0].value.profile.sharedSecrets[0].value : null
-            );
-            invitationIdentity = delegateIdentity;
-        }
+    private async mergeInvitationIdentityIfRequired(dto: DTO): Promise<IIdentity> {
+        let invitationIdentity = this.invitationIdentity;
+        let delegateIdentity = await IdentityModel.findDefaultByPartyId(this.delegate.id);
 
         const isSubjectUpdatingRelationshipInvitation =
             dto.initiatedBy === RelationshipInitiatedBy.Subject.code
@@ -649,159 +674,111 @@ export class RelationshipModel {
             invitationIdentity = delegateIdentity;
         }
 
+        return invitationIdentity;
+    }
+
+    public async getAttribute(code: string): Promise<IRelationshipAttribute> {
+        let attribute: IRelationshipAttribute;
+        if (this.attributes) {
+            attribute = this.attributes.find((attribute) => attribute.attributeName.code === code);
+        }
+        if (!attribute) {
+            const relationshipType = await RelationshipTypeModel.findByCodeIgnoringDateRange(this.relationshipType.code);
+            const relationshipAttributeNameUsage = relationshipType.findAttributeNameUsage(code);
+            if (relationshipAttributeNameUsage && relationshipAttributeNameUsage.attributeName.appliesToInstance) {
+                attribute = await RelationshipAttributeModel.createInstance(relationshipAttributeNameUsage);
+            }
+        }
+        return Promise.resolve(attribute);
+    }
+
+    public async isManageAuthAllowed(): Promise<boolean> {
+        let attribute = await this.getAttribute(Constants.RelationshipAttributeNameCode.DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND);
+        if (attribute && attribute.value && attribute.value.length > 0) {
+            return 'true' === attribute.value[0];
+        }
+        return false;
+    }
+
+}
+
+interface IRelationshipDocument extends IRelationship, mongoose.Document {
+}
+
+// static ..............................................................................................................
+
+export class RelationshipModel {
+
+    public static async create(source: IRelationship): Promise<IRelationship> {
+        return RelationshipMongooseModel.create(source);
+    }
+
+    public static async createFromDto(dto: DTO): Promise<IRelationship> {
+
+        // verify permissions
+        let subjectIdentity = await IdentityModel.findByIdValue(Url.lastPathElement(dto.subject.href));
+        new IdentityCanCreateRelationshipPermissionEnforcer().evaluate(subjectIdentity);
+
+        // delegate identity if exists - href does not exist for invitation and value is for creation
+        const delegateIdValue = Url.lastPathElement(dto.delegate.href);
+        let delegateIdentity: IIdentity;
+        if (delegateIdValue) {
+            delegateIdentity = await IdentityModel.findByIdValue(delegateIdValue);
+        }
+
+        // get relationship members
+        const relationshipType = await RelationshipTypeModel.findByCodeIgnoringDateRange(Url.lastPathElement(dto.relationshipType.href));
+        const initiatedBy = RelationshipInitiatedBy.valueOf(dto.initiatedBy);
+        const invitationIdentity: IIdentity = await this.createInvitationIdentityIfRequired(dto);
+        let startTimestamp: Date = dto.startTimestamp;
+        let endTimestamp: Date = dto.endTimestamp;
+        const attributes: IRelationshipAttribute[] = await this.mergeAttributes(relationshipType, [], dto.attributes as RelationshipAttributeDTO[]);
+
+        // if invitation identity has been created, then this is the temporary delegate identity
+        if (invitationIdentity) {
+            delegateIdentity = invitationIdentity;
+        }
+
+        // zero hours on timestamps
+        Utils.startOfDate(startTimestamp);
+        Utils.startOfDate(endTimestamp);
+
+        // check start date not past date
+        if (!Utils.dateIsTodayOrInFuture(startTimestamp)) {
+            throw new Error('400:Relationship access period start date can not be a past date');
+        }
+
+        // check start date not greater than end date
+        if (endTimestamp && startTimestamp > endTimestamp) {
+            throw new Error('400:Relationship access period start date can not be greater than end date');
+        }
+
         Assert.assertNotNull(subjectIdentity, 'Subject identity not found');
         Assert.assertNotNull(delegateIdentity, 'Delegate identity not found');
 
-        if (dto.initiatedBy === RelationshipInitiatedBy.Subject.code) {
-            const hasAccess = await PartyModel.hasAccess(subjectIdentity.idValue, myPrincipal, myIdentity);
-            if (!hasAccess) {
-                throw new Error('403');
+        return this.add(
+            relationshipType,
+            subjectIdentity.party,
+            subjectIdentity.profile.name,
+            delegateIdentity.party,
+            delegateIdentity.profile.name,
+            startTimestamp,
+            endTimestamp,
+            initiatedBy,
+            invitationIdentity,
+            attributes
+        );
+    }
+
+    // this is a static method because we may be constructing attributes for a new relationship that has not been created yet
+    public static async updateOrAddAttribute(attributes: IRelationshipAttribute[], attributeName: IRelationshipAttributeName, attributeValue: string[]): Promise<void> {
+        if (attributes && attributeName) {
+            const matchedAttribute = attributes.find((attribute) => attribute.attributeName.code === attributeName.code);
+            if (matchedAttribute) {
+                matchedAttribute.value = attributeValue;
+            } else {
+                attributes.push(await RelationshipAttributeModel.add(attributeValue, attributeName));
             }
-        }
-        if (dto.initiatedBy === RelationshipInitiatedBy.Delegate.code) {
-            const hasAccess = await PartyModel.hasAccess(delegateIdentity.idValue, myPrincipal, myIdentity);
-            if (!hasAccess) {
-                throw new Error('403');
-            }
-        }
-
-        const permissionCustomisationAllowed = relationshipType.findAttributeNameUsageByCode('PERMISSION_CUSTOMISATION_ALLOWED_IND');
-        let isPermissionAttributeAllowed = permissionCustomisationAllowed !== null && permissionCustomisationAllowed.defaultValue;
-
-        for (let dtoAttribute of dto.attributes) {
-            Assert.assertNotNull(dtoAttribute.attributeName, 'Attribute did not have an attribute name');
-            Assert.assertNotNull(dtoAttribute.attributeName.href, 'Attribute did not have an attribute name href');
-
-            const attributeNameCode = Url.lastPathElement(dtoAttribute.attributeName.href);
-            Assert.assertNotNull(attributeNameCode, 'Attribute name code not found', `Unexpected attribute name href last element: ${dtoAttribute.attributeName.href}`);
-
-            const attributeName = await RelationshipAttributeNameModel.findByCodeIgnoringDateRange(attributeNameCode);
-            Assert.assertNotNull(attributeName, 'Attribute name not found', `Expected to find attribute name with code: ${attributeNameCode}`);
-
-            const attributeValue = dtoAttribute.value;
-
-            const isPermissionClassifier = attributeName.classifier === RelationshipAttributeNameClassifier.Permission.code;
-            const isOtherClassifier = attributeName.classifier === RelationshipAttributeNameClassifier.Other.code;
-            const isAgencyServiceClassifier = attributeName.classifier === RelationshipAttributeNameClassifier.AgencyService.code;
-
-            if (isPermissionClassifier) {
-
-                if (!isPermissionAttributeAllowed) {
-                    logger.warn('Found relationship attribute with classifier permission but permission customisation not allowed');
-                    throw new Error('400');
-                } else {
-                    const relationshipAttributeNameCode = Url.lastPathElement(dtoAttribute.attributeName.href);
-                    const relationshipAttributeNameUsage = relationshipType.findAttributeNameUsageByCode(relationshipAttributeNameCode);
-                    if (relationshipAttributeNameUsage !== null) {
-
-                        let foundAttribute = false;
-                        for (let attribute of attributes) {
-                            if (attribute.attributeName.code === attributeName.code) {
-                                attribute.value = attributeValue;
-                                await attribute.save();
-                                foundAttribute = true;
-                                break;
-                            }
-                        }
-                        if (!foundAttribute) {
-                            attributes.push(await RelationshipAttributeModel.add(attributeValue, attributeName));
-                        }
-
-                    } else {
-                        logger.warn('Relationship attribute not associated with relationship type');
-                        throw new Error('400');
-                    }
-                }
-
-            } else if (isOtherClassifier) {
-
-                const relationshipAttributeNameCode = Url.lastPathElement(dtoAttribute.attributeName.href);
-                const relationshipAttributeNameUsage = relationshipType.findAttributeNameUsageByCode(relationshipAttributeNameCode);
-                if (relationshipAttributeNameUsage !== null) {
-
-                    let foundAttribute = false;
-                    for (let attribute of attributes) {
-                        if (attribute.attributeName.code === attributeName.code) {
-                            attribute.value = attributeValue;
-                            await attribute.save();
-                            foundAttribute = true;
-                            break;
-                        }
-                    }
-                    if (!foundAttribute) {
-                        attributes.push(await RelationshipAttributeModel.add(attributeValue, attributeName));
-                    }
-
-                } else {
-                    logger.warn('Relationship attribute not associated with relationship type');
-                    throw new Error('400');
-                }
-
-            } else if (isAgencyServiceClassifier) {
-
-                const relationshipAttributeNameCode = Url.lastPathElement(dtoAttribute.attributeName.href);
-                const relationshipAttributeNameUsage = relationshipType.findAttributeNameUsageByCode(relationshipAttributeNameCode);
-                if (relationshipAttributeNameUsage !== null) {
-
-                    let foundAttribute = false;
-                    for (let attribute of attributes) {
-                        if (attribute.attributeName.code === attributeName.code) {
-                            attribute.value = attributeValue;
-                            await attribute.save();
-                            foundAttribute = true;
-                            break;
-                        }
-                    }
-                    if (!foundAttribute) {
-                        attributes.push(await RelationshipAttributeModel.add(attributeValue, attributeName));
-                    }
-
-                } else {
-                    logger.warn('Relationship attribute not associated with relationship type');
-                    throw new Error('400');
-                }
-
-            }
-        }
-
-        if (isNewRelationship) {
-            let status = RelationshipStatus.Pending;
-
-            // check subject
-            if (initiatedBy === RelationshipInitiatedBy.Subject && relationshipType.autoAcceptIfInitiatedFromSubject) {
-                status = RelationshipStatus.Accepted;
-            }
-
-            // check delegate
-            if (initiatedBy === RelationshipInitiatedBy.Delegate && relationshipType.autoAcceptIfInitiatedFromDelegate) {
-                status = RelationshipStatus.Accepted;
-            }
-
-            return RelationshipModel.create({
-                relationshipType: relationshipType,
-                subject: subjectIdentity.party,
-                subjectNickName: subjectIdentity.profile.name,
-                delegate: delegateIdentity.party,
-                delegateNickName: delegateIdentity.profile.name,
-                startTimestamp: startTimestamp,
-                endTimestamp: endTimestamp,
-                initiatedBy: initiatedBy.code,
-                invitationIdentity: invitationIdentity,
-                status: status.code,
-                attributes: attributes
-                } as any
-            );
-        } else {
-            Assert.assertNotNull(relationship, 'Relationship not found');
-
-            relationship.subject = subjectIdentity.party;
-            relationship.delegate = delegateIdentity.party;
-            relationship.startTimestamp = startTimestamp;
-            relationship.endTimestamp = endTimestamp;
-            relationship.invitationIdentity = invitationIdentity;
-            relationship.attributes = attributes;
-
-            return relationship.save();
         }
     }
 
@@ -818,13 +795,13 @@ export class RelationshipModel {
 
         let status = RelationshipStatus.Pending;
 
-        // check subject
-        if (initiatedBy === RelationshipInitiatedBy.Subject && relationshipType.autoAcceptIfInitiatedFromSubject) {
+        // check subject - OSP relationship type this is case when
+        if (initiatedBy === RelationshipInitiatedBy.Subject && relationshipType.findAttributeNameUsage(Constants.RelationshipAttributeNameCode.AUTOACCEPT_IF_INITIATED_FROM_SUBJECT_IND) !== null) {
             status = RelationshipStatus.Accepted;
         }
 
         // check delegate
-        if (initiatedBy === RelationshipInitiatedBy.Delegate && relationshipType.autoAcceptIfInitiatedFromDelegate) {
+        if (initiatedBy === RelationshipInitiatedBy.Delegate && relationshipType.findAttributeNameUsage(Constants.RelationshipAttributeNameCode.AUTOACCEPT_IF_INITIATED_FROM_DELEGATE_IND) !== null) {
             status = RelationshipStatus.Accepted;
         }
 
@@ -870,7 +847,6 @@ export class RelationshipModel {
     public static async findByInvitationCode(invitationCode: string): Promise<IRelationship> {
         const identity = await IdentityModel.findByInvitationCode(invitationCode);
         if (identity) {
-            const delegate = identity.party;
             return RelationshipMongooseModel
                 .findOne({
                     invitationIdentity: identity
@@ -904,7 +880,8 @@ export class RelationshipModel {
                     'subjectNickName',
                     'delegate',
                     'delegateNickName',
-                    'invitationIdentity',
+                    'invitationIdentity.profile.name',
+                    'invitationIdentity.profile.sharedSecrets',
                     'attributes.attributeName'
                 ])
                 .exec();
@@ -912,7 +889,6 @@ export class RelationshipModel {
         return null;
     }
 
-    // todo what about start date?
     public static async hasActiveInDateRange1stOr2ndLevelConnection(requestingParty: IParty, requestedIdValue: string, date: Date): Promise<boolean> {
 
         const requestedParty = await PartyModel.findByIdentityIdValue(requestedIdValue);
@@ -946,6 +922,7 @@ export class RelationshipModel {
                             '$match': {
                                 '$and': [
                                     {'subject': new mongoose.Types.ObjectId(requestedParty.id)},
+                                    {'delegate': {'$ne': new mongoose.Types.ObjectId(requestingParty.id)}},
                                     {'status': RelationshipStatus.Accepted.code},
                                     {'startTimestamp': {$lte: date}},
                                     {'$or': [{endTimestamp: null}, {endTimestamp: {$gte: date}}]}
@@ -961,6 +938,7 @@ export class RelationshipModel {
                         {
                             '$match': {
                                 '$and': [
+                                    {'subject': {'$ne': new mongoose.Types.ObjectId(requestedParty.id)}},
                                     {'delegate': new mongoose.Types.ObjectId(requestingParty.id)},
                                     {'status': RelationshipStatus.Accepted.code},
                                     {'startTimestamp': {$lte: date}},
@@ -974,7 +952,7 @@ export class RelationshipModel {
 
                 let arrays = [
                     listOfDelegateIds.map((obj: {_id: string}): string => obj['_id'].toString()),
-                    listOfSubjectIds.map((obj: {_id: string}) => obj['_id'].toString())
+                    listOfSubjectIds.map((obj: {_id: string}): string => obj['_id'].toString())
                 ];
 
                 const listOfIntersectingPartyIds = arrays.shift().filter(function (v: string) {
@@ -988,6 +966,136 @@ export class RelationshipModel {
             }
 
         }
+    }
+
+    public static async computeConnectionStrength(requestingParty: IParty, requestedIdValue: string, date: Date): Promise<number> {
+
+        const requestedParty = await PartyModel.findByIdentityIdValue(requestedIdValue);
+
+        const manageAuthStrengthOffset = 0.5;
+
+        if (!requestedParty) {
+            // no such subject
+            return Promise.resolve(0);
+        } else {
+
+            let strongestStrength = 0;
+
+            // 1st level
+
+            const strongestFirstLevelRelationship = await RelationshipMongooseModel
+                .findOne({
+                    subject: requestedParty,
+                    delegate: requestingParty,
+                    status: RelationshipStatus.Accepted.code,
+                    startTimestamp: {$lte: date},
+                    $or: [{endTimestamp: null}, {endTimestamp: {$gte: date}}]
+                })
+                .deepPopulate([
+                    'attributes.attributeName'
+                ])
+                .sort({strength: -1})
+                .exec();
+
+            if (strongestFirstLevelRelationship) {
+                strongestStrength = strongestFirstLevelRelationship.strength;
+                if (await strongestFirstLevelRelationship.isManageAuthAllowed()) {
+                    strongestStrength = strongestStrength + manageAuthStrengthOffset;
+                }
+            }
+
+            // 2nd level
+
+            const listOfDelegateIds = await RelationshipMongooseModel
+                .aggregate([
+                    {
+                        '$match': {
+                            '$and': [
+                                {'subject': new mongoose.Types.ObjectId(requestedParty.id)},
+                                {'delegate': {'$ne': new mongoose.Types.ObjectId(requestingParty.id)}},
+                                {'status': RelationshipStatus.Accepted.code},
+                                {'startTimestamp': {$lte: date}},
+                                {'$or': [{endTimestamp: null}, {endTimestamp: {$gte: date}}]}
+                            ]
+                        }
+                    },
+                    {'$group': {'_id': '$delegate'}}
+                ])
+                .exec();
+
+            const listOfSubjectIds = await RelationshipMongooseModel
+                .aggregate([
+                    {
+                        '$match': {
+                            '$and': [
+                                {'subject': {'$ne': new mongoose.Types.ObjectId(requestedParty.id)}},
+                                {'delegate': new mongoose.Types.ObjectId(requestingParty.id)},
+                                {'status': RelationshipStatus.Accepted.code},
+                                {'startTimestamp': {$lte: date}},
+                                {'$or': [{endTimestamp: null}, {endTimestamp: {$gte: date}}]}
+                            ]
+                        }
+                    },
+                    {'$group': {'_id': '$subject'}}
+                ])
+                .exec();
+
+            let arrays = [
+                listOfDelegateIds.map((obj: {_id: string}): string => obj['_id'].toString()),
+                listOfSubjectIds.map((obj: {_id: string}): string => obj['_id'].toString())
+            ];
+
+            const listOfIntersectingPartyIds = arrays.shift().filter(function (v: string) {
+                return arrays.every(function (a) {
+                    return a.indexOf(v) !== -1;
+                });
+            });
+
+            listOfIntersectingPartyIds.forEach(async(partyId: string) => {
+                let party = await PartyModel.findById(partyId);
+                let relationship_intermediaryParty_to_requestingParty = await RelationshipMongooseModel
+                    .findOne({
+                        subject: party,
+                        delegate: requestingParty,
+                        status: RelationshipStatus.Accepted.code,
+                        startTimestamp: {$lte: date},
+                        $or: [{endTimestamp: null}, {endTimestamp: {$gte: date}}]
+                    })
+                    .deepPopulate([
+                        'attributes.attributeName'
+                    ])
+                    .sort({strength: -1})
+                    .exec();
+                let relationship_requestedParty_to_intermediaryParty = await RelationshipMongooseModel
+                    .findOne({
+                        subject: requestedParty,
+                        delegate: party,
+                        status: RelationshipStatus.Accepted.code,
+                        startTimestamp: {$lte: date},
+                        $or: [{endTimestamp: null}, {endTimestamp: {$gte: date}}]
+                    })
+                    .deepPopulate([
+                        'attributes.attributeName'
+                    ])
+                    .sort({strength: -1})
+                    .exec();
+                if (relationship_intermediaryParty_to_requestingParty && relationship_requestedParty_to_intermediaryParty) {
+                    let strength = Math.min(
+                        relationship_intermediaryParty_to_requestingParty.strength,
+                        relationship_requestedParty_to_intermediaryParty.strength
+                    );
+                    if (await relationship_intermediaryParty_to_requestingParty.isManageAuthAllowed() &&
+                        await relationship_requestedParty_to_intermediaryParty.isManageAuthAllowed()) {
+                        strength = strength + manageAuthStrengthOffset;
+                    }
+                    strongestStrength = Math.max(strength, strongestStrength);
+                }
+            });
+
+            return Promise.resolve(strongestStrength);
+
+        }
+
     }
 
     // todo this search might no longer be useful from SS2
@@ -1010,6 +1118,8 @@ export class RelationshipModel {
                         'subjectNickName',
                         'delegate',
                         'delegateNickName',
+                        'invitationIdentity.profile.name',
+                        'invitationIdentity.profile.sharedSecrets',
                         'attributes.attributeName'
                     ])
                     .skip((page - 1) * thePageSize)
@@ -1098,6 +1208,9 @@ export class RelationshipModel {
                         'subjectNickName',
                         'delegate',
                         'delegateNickName',
+                        'invitationIdentity.profile.name',
+                        'invitationIdentity.profile.sharedSecrets',
+                        'supersededBy',
                         'attributes.attributeName'
                     ])
                     .sort({
@@ -1151,6 +1264,8 @@ export class RelationshipModel {
                         'subjectNickName',
                         'delegate',
                         'delegateNickName',
+                        'invitationIdentity.profile.name',
+                        'invitationIdentity.profile.sharedSecrets',
                         'attributes.attributeName'
                     ])
                     .sort({
@@ -1217,6 +1332,77 @@ export class RelationshipModel {
                 reject(e);
             }
         });
+    }
+
+    public static async mergeAttributes(relationshipType: IRelationshipType, attributes: IRelationshipAttribute[], dtoAttributes: RelationshipAttributeDTO[]): Promise<IRelationshipAttribute[]> {
+        const permissionCustomisationAllowed = relationshipType.findAttributeNameUsage('PERMISSION_CUSTOMISATION_ALLOWED_IND');
+        let isPermissionAttributeAllowed = permissionCustomisationAllowed !== null;
+
+        // iterate thru dto attributes and update or add attributes as needed
+        for (let dtoAttribute of dtoAttributes) {
+
+            // attribute value
+            const dtoAttributeValue = dtoAttribute.value;
+
+            // get and validate relationship attribute
+            if (!dtoAttribute.attributeName || !dtoAttribute.attributeName.href) {
+                throw new Error('400:Relationship attribute invalid');
+            }
+            const relationshipAttributeNameUsage = relationshipType.findAttributeNameUsage(Url.lastPathElement(dtoAttribute.attributeName.href));
+            if (!relationshipAttributeNameUsage) {
+                throw new Error('400:Relationship attribute not associated with relationship type');
+            }
+
+            // classifier flags
+            const isPermissionClassifier = relationshipAttributeNameUsage.attributeName.classifier === RelationshipAttributeNameClassifier.Permission.code;
+            const isOtherClassifier = relationshipAttributeNameUsage.attributeName.classifier === RelationshipAttributeNameClassifier.Other.code;
+            const isAgencyServiceClassifier = relationshipAttributeNameUsage.attributeName.classifier === RelationshipAttributeNameClassifier.AgencyService.code;
+
+            // check
+            if (!relationshipAttributeNameUsage.attributeName.appliesToInstance) {
+                throw new Error(`400:Relationship attribute name ${relationshipAttributeNameUsage.attributeName.code} does not apply to instance`);
+            }
+
+            // update or add attribute
+            if (isPermissionClassifier) {
+                if (isPermissionAttributeAllowed) {
+                    await RelationshipModel.updateOrAddAttribute(attributes, relationshipAttributeNameUsage.attributeName, dtoAttributeValue);
+                } else {
+                    throw new Error('400:Relationship permission attribute not allowed');
+                }
+            } else if (isOtherClassifier || isAgencyServiceClassifier) {
+                await RelationshipModel.updateOrAddAttribute(attributes, relationshipAttributeNameUsage.attributeName, dtoAttributeValue);
+            }
+        }
+
+        return attributes;
+    }
+
+    private static async createInvitationIdentityIfRequired(dto: DTO): Promise<IIdentity> {
+        let invitationIdentity: IIdentity;
+
+        const isSubjectCreatingRelationshipInvitation =
+            dto.initiatedBy === RelationshipInitiatedBy.Subject.code
+            && dto.delegate.value
+            && dto.delegate.value.partyType === PartyType.Individual.code
+            && dto.delegate.value.identities.length === 1
+            && dto.delegate.value.identities[0].value
+            && dto.delegate.value.identities[0].value.identityType === IdentityType.InvitationCode.code
+            && dto.delegate.value.identities[0].value.profile.provider === ProfileProvider.Invitation.code;
+
+        if (isSubjectCreatingRelationshipInvitation) {
+            const hasSharedSecretValue = dto.delegate.value.identities[0].value.profile.sharedSecrets
+                && dto.delegate.value.identities[0].value.profile.sharedSecrets.length === 1
+                && dto.delegate.value.identities[0].value.profile.sharedSecrets[0].value;
+
+            invitationIdentity = await IdentityModel.createInvitationCodeIdentity(
+                dto.delegate.value.identities[0].value.profile.name.givenName,
+                dto.delegate.value.identities[0].value.profile.name.familyName,
+                hasSharedSecretValue ? dto.delegate.value.identities[0].value.profile.sharedSecrets[0].value : null
+            );
+        }
+
+        return invitationIdentity;
     }
 
 }

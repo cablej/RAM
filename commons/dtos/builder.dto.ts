@@ -1,4 +1,5 @@
 import {Link} from './link.dto';
+import {Permission} from './permission.dto';
 import {HrefValue} from './hrefValue.dto';
 import {Utils} from '../utils';
 
@@ -70,6 +71,7 @@ export class Builder<T> {
 
     public build(): T {
         this.mapArray('_links', Link);
+        this.mapArray('_perms', Permission);
         this.mapPrimitives(this.sourceObject, this.targetObject);
         return this.targetObject as T;
     }

@@ -21,6 +21,7 @@ export class AccessPeriodComponent implements OnInit {
     public form: FormGroup;
     public dateFormat: string = 'dd/mm/yy';
 
+    @Input('originalStartDate') public originalStartDate: Date;
     @Input('data') public data: AccessPeriodComponentData;
 
     @Output('dataChange') public dataChanges = new EventEmitter<AccessPeriodComponentData>();
@@ -40,7 +41,7 @@ export class AccessPeriodComponent implements OnInit {
         this.form = this._fb.group(
             {
                 'startDateEnabled': [this.data.startDateEnabled],
-                'startDate': [formattedStartDate, Validators.compose([Validators.required, RAMNgValidators.dateFormatValidator])],
+                'startDate': [formattedStartDate, Validators.compose([Validators.required, RAMNgValidators.dateFormatValidator, this.dateNotInPastValidator.bind(this)])],
                 'endDate': [formattedEndDate, Validators.compose([RAMNgValidators.dateFormatValidator])],
                 'noEndDate': [this.data.noEndDate]
             },
@@ -62,10 +63,39 @@ export class AccessPeriodComponent implements OnInit {
             v.startDate = Utils.parseDate(v.startDate);
             v.endDate = Utils.parseDate(v.endDate);
             this.dataChanges.emit(v);
-            this.isValid.emit(this.form.valid);
+            this.isValid.emit(this.form.valid)  ;
         });
 
+        // emit initial valid
         this.isValid.emit(this.form.valid);
+
+    }
+
+    public dateNotInPastValidator(dateCtrl: FormControl) {
+        // valid
+        if (!this.data.startDateEnabled) {
+            return null;
+        }
+        // valid
+        if (this.dateIsOriginalOrTodayOrInFuture(dateCtrl.value)) {
+            return null;
+        }
+        // invalid
+        return {
+            startDateInPast: {
+                valid: false
+            }
+        };
+    }
+
+    private dateIsOriginalOrTodayOrInFuture(ctrlValue: string | Date) {
+        if (ctrlValue) {
+            const date = Utils.parseDate(ctrlValue);
+            if (Utils.dateIsTodayOrInFuture(date) || date.getTime() === this.originalStartDate.getTime()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private formatDate(d: Date) {

@@ -17,7 +17,6 @@ import {
     IParty,
     IPartyType,
     IProfileProvider,
-    IInvitationCodeRelationshipAddDTO,
     IRelationship,
     IRelationshipType,
     IRelationshipStatus,
@@ -234,17 +233,17 @@ export class RAMRestService {
             .map(this.extractData(Relationship));
     }
 
-    public notifyDelegateByInvitationCode(invitationCode: string, notification: INotifyDelegateDTO): Observable<IRelationship> {
-        return this.http
-            .post(`/api/v1/relationship/invitationCode/${invitationCode}/notifyDelegate`, JSON.stringify(notification), {
-                headers: this.headersForJson()
-            })
-            .map(this.extractData(Relationship));
-    }
+    // public notifyDelegateByInvitationCode(invitationCode: string, notification: INotifyDelegateDTO): Observable<IRelationship> {
+    //     return this.http
+    //         .post(`/api/v1/relationship/invitationCode/${invitationCode}/notifyDelegate`, JSON.stringify(notification), {
+    //             headers: this.headersForJson()
+    //         })
+    //         .map(this.extractData(Relationship));
+    // }
 
-    public createRelationship(relationship: IInvitationCodeRelationshipAddDTO): Observable<IRelationship> {
+    public notifyDelegateByHref(href: string, notification: INotifyDelegateDTO): Observable<IRelationship> {
         return this.http
-            .post(`/api/v1/relationship-by-invitation`, JSON.stringify(relationship), {
+            .post(new Href(href).toString(), JSON.stringify(notification), {
                 headers: this.headersForJson()
             })
             .map(this.extractData(Relationship));

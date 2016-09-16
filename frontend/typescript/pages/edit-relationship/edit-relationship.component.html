@@ -1,54 +1,72 @@
 <page-header [identity]="identity"
              tab="GIVE_AUTHORISATION"
-             [messages]="globalMessages"
-             [giveAuthorisationsEnabled]="giveAuthorisationsEnabled"></page-header>
+             [messages]="globalMessages"></page-header>
 
-<representative-details
-        [(data)]='relationshipComponentData.representativeDetails'
-        (isValid)='representativeIsValid=$event'>
-</representative-details>
+<div *ngIf="relationship">
 
-<authorisation-type
-        [data]='relationshipComponentData.authType'
-        [options]='relationshipTypeRefs'
-        (dataChange)="authTypeChange($event)"
-        (isValid)='authTypeIsValid=$event'>
-</authorisation-type>
+    <representative-details
+            [(data)]='relationshipComponentData.representativeDetails'
+            (isValid)='representativeIsValid=$event'>
+    </representative-details>
 
-<authorisation-management
-        [(data)]='relationshipComponentData.authorisationManagement'
-        [attributeNameUsage]='manageAuthAttribute'
-        [disabled]="disableAuthMgmt"></authorisation-management>
+    <authorisation-type
+            [data]='relationshipComponentData.authType'
+            [options]='relationshipTypeRefs'
+            (dataChange)="authTypeChange($event)"
+            (isValid)='authTypeIsValid=$event'>
+    </authorisation-type>
 
-<authorisation-permissions
-        [(data)]='relationshipComponentData.authorisationPermissions'
-        [(permissionAttributes)]='relationshipComponentData.permissionAttributes'
-        [attributeNameUsages]='permissionAttributeUsages'
-        (validationErrors)='authorisationPermissionErrors=$event'></authorisation-permissions>
+    <authorisation-management
+            [(data)]='relationshipComponentData.authorisationManagement'
+            [attributeNameUsage]='manageAuthAttribute'
+            [disabled]="disableAuthMgmt"></authorisation-management>
 
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h4><span class="badge square">5</span> {{'addRelationship.accessPeriod.header' | translate}}</h4>
+    <authorisation-permissions
+            [data]='relationshipComponentData.authorisationPermissions'
+            [permissionAttributes]='relationshipComponentData.permissionAttributes'
+            [attributeNameUsages]='permissionAttributeUsages'
+            (validationErrors)='authorisationPermissionErrors=$event'></authorisation-permissions>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4><span class="badge square">5</span> {{'addRelationship.accessPeriod.header' | translate}}</h4>
+        </div>
+        <div class="panel-body">
+            <access-period
+                    [(data)]='relationshipComponentData.accessPeriod'
+                    [originalStartDate]='originalStartDate'
+                    (isValid)='accessPeriodIsValid=$event'>
+            </access-period>
+        </div>
     </div>
-    <div class="panel-body">
-        <access-period
-                [(data)]='relationshipComponentData.accessPeriod'
-                (isValid)='accessPeriodIsValid=$event'>
-        </access-period>
-    </div>
-</div>
 
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h4><span class="badge square">6</span> {{'addRelationship.declaration.header' | translate}}</h4>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4><span class="badge square">6</span> {{'addRelationship.declaration.header' | translate}}</h4>
+        </div>
+        <div class="panel-body" *ngIf="declarationText !== null">
+            <div class="col-md-12">
+                <h4>By authorising the nominated representative to act on behalf of the selected
+                    {{services.model.partyTypeLabelForParty(relationship.subject)}}, it is acknowledged that
+                    they will be able to perform all of the selected transactions on their behalf.</h4>
+            </div>
+            <relationship-declaration
+                    [markdown]='declarationText'
+                    [(data)]='relationshipComponentData.declaration'
+                    (isValid)='declarationIsValid=$event'></relationship-declaration>
+        </div>
     </div>
-    <div class="panel-body">
-        <relationship-declaration
-                [(data)]='relationshipComponentData.declaration'
-                [markdown]="markdown"
-                (backEvent)="back()"
-                (createRelationshipEvent)="submit()"
-                (isValid)='declarationIsValid=$event'
-                [isAuthorizedBtnEnabled]='accessPeriodIsValid && authTypeIsValid && representativeIsValid'></relationship-declaration>
+
+    <div id="action-button-bar">
+        <div class="pull-left">
+            <button class="btn btn-default align-center"
+               (click)="back()">← {{'back' | translate}}</button>
+        </div>
+        <div class="pull-right">
+            <button class="btn btn-primary align-center"
+               [disabled]="!(accessPeriodIsValid && authTypeIsValid && representativeIsValid && declarationIsValid)"
+               (click)="submit()">{{'addRelationship.authorise' | translate}} →</button>
+        </div>
     </div>
+
 </div>

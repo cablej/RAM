@@ -81,6 +81,7 @@ export class LDIFExporter {
         ldif += LDIFExporter.getAttributeLDIF(Headers.IdentityIdValue, identity.idValue);
         ldif += LDIFExporter.getAttributeLDIF(Headers.IdentityRawIdValue, identity.rawIdValue);
         ldif += LDIFExporter.getAttributeLDIF(Headers.IdentityType, identity.identityType);
+        ldif += LDIFExporter.getAttributeLDIF(Headers.IdentityStrength, identity.strength);
 
         ldif += LDIFExporter.getAttributeLDIF(Headers.PartyType, identity.party.partyType);
 
@@ -124,6 +125,7 @@ export class LDIFExporter {
 
         ldif += LDIFExporter.getAttributeLDIF(Headers.GivenName, agencyUser.givenName);
         ldif += LDIFExporter.getAttributeLDIF(Headers.FamilyName, agencyUser.familyName);
+        ldif += LDIFExporter.getAttributeLDIF(Headers.AgencyUserAgency, agencyUser.agency);
 
         let programRoles: Array<string> = [];
         for (let programRole of agencyUser.programRoles) {

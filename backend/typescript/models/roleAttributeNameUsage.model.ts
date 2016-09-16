@@ -1,11 +1,14 @@
 import * as mongoose from 'mongoose';
 import {RAMSchema, IRAMObject, RAMObject, Model} from './base';
 import {IRoleAttributeName, RoleAttributeNameModel} from './roleAttributeName.model';
+import {Permissions} from '../../../commons/dtos/permission.dto';
+import {PermissionTemplates} from '../../../commons/permissions/allPermission.templates';
+import {PermissionEnforcers} from '../permissions/allPermission.enforcers';
 
 // force schema to load first (see https://github.com/atogov/RAM/pull/220#discussion_r65115456)
-
 /* tslint:disable:no-unused-variable */
 const _RoleAttributeNameModel = RoleAttributeNameModel;
+/* tslint:enable:no-unused-variable */
 
 // mongoose ...........................................................................................................
 
@@ -22,9 +25,9 @@ const RoleAttributeNameUsageSchema = RAMSchema({
         required: [true, 'Optional Indicator is required']
     },
     defaultValue: {
-      type: String,
-      required: false,
-      trim: true
+        type: String,
+        required: false,
+        trim: true
     },
     attributeName: {
         type: mongoose.Schema.Types.ObjectId,
@@ -45,6 +48,10 @@ class RoleAttributeNameUsage extends RAMObject implements IRoleAttributeNameUsag
     public optionalInd: boolean;
     public defaultValue: string;
     public attributeName: IRoleAttributeName;
+
+    public getPermissions(): Promise<Permissions> {
+        return this.enforcePermissions(PermissionTemplates.roleAttributeNameUsage, PermissionEnforcers.roleAttributeNameUsage);
+    }
 
 }
 

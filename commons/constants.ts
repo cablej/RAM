@@ -1,4 +1,4 @@
-export const RAMConstants = {
+export const Constants = {
 
     GlobalMessage: {
         DELEGATE_NOTIFIED: 'DELEGATE_NOTIFIED',
@@ -15,8 +15,14 @@ export const RAMConstants = {
         'RELATIONSHIP_CREATE': 'relationship-create',
         'ROLE_LIST': 'role-list',
         'ROLE_CREATE': 'role-create',
+        'AUSKEY_LIST': 'auskey-list',
         'MODIFY': 'modify',
-        'DELETE': 'delete'
+        'DELETE': 'delete',
+        "NOTIFY": 'notify',
+        'PRINT': 'print',
+        'ACCEPT': 'accept',
+        'REJECT': 'reject',
+        'CLAIM': 'claim',
     },
 
     AUSkey: {
@@ -25,7 +31,7 @@ export const RAMConstants = {
 
     PartyTypeCode: {
         INDIVIDUAL: 'INDIVIDUAL',
-        ORGANISATION: 'ORGANISATION'
+        ABN: 'ABN'
     },
 
     ProfileProviderCode: {
@@ -50,6 +56,11 @@ export const RAMConstants = {
         OSP: 'OSP'
     },
 
+    RelationshipStatusCode: {
+        ACCEPTED: 'ACCEPTED',
+        PENDING: 'PENDING'
+    },
+
     RelationshipAttributeNameClassifier: {
         PERMISSION: 'PERMISSION',
         OTHER: 'OTHER'
@@ -62,7 +73,11 @@ export const RAMConstants = {
         DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND: 'DELEGATE_MANAGE_AUTHORISATION_ALLOWED_IND',
         DELEGATE_MANAGE_AUTHORISATION_USER_CONFIGURABLE_IND: 'DELEGATE_MANAGE_AUTHORISATION_USER_CONFIGURABLE_IND',
         PERMISSION_CUSTOMISATION_ALLOWED_IND: 'PERMISSION_CUSTOMISATION_ALLOWED_IND',
-        ACCESS_LEVELS_DESCRIPTION: 'ACCESS_LEVELS_DESCRIPTION'
+        ACCESS_LEVELS_DESCRIPTION: 'ACCESS_LEVELS_DESCRIPTION',
+        AUTOACCEPT_IF_INITIATED_FROM_DELEGATE_IND: 'AUTOACCEPT_IF_INITIATED_FROM_DELEGATE_IND',
+        AUTOACCEPT_IF_INITIATED_FROM_SUBJECT_IND: 'AUTOACCEPT_IF_INITIATED_FROM_SUBJECT_IND',
+        MANAGED_EXTERNALLY_IND: 'MANAGED_EXTERNALLY_IND',
+        DELEGATE_EDIT_OWN_IND: 'DELEGATE_EDIT_OWN_IND'
     },
 
     RoleStatusCode: {

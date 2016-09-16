@@ -1,6 +1,7 @@
 import * as mongoose from 'mongoose';
 import {logger} from '../logger';
 import * as _ from 'lodash';
+import {IPermission, Permissions} from '../../../commons/dtos/permission.dto';
 
 /* tslint:disable:no-var-requires */
 const mongooseUniqueValidator = require('mongoose-unique-validator');
@@ -57,11 +58,15 @@ export interface IRAMObject {
     resourceVersion: string;
     save(fn?: (err: any, product: this, numAffected: number) => void): Promise<this>;
     delete(): void;
+    enforcePermissions(templates: Permissions, enforcers: IPermissionEnforcer<any>[]): Promise<Permissions>;
+    getPermissions(): Promise<Permissions>;
 }
 
 // exists for type safety only, do not add function implementations here
-export class RAMObject implements IRAMObject {
+export abstract class RAMObject implements IRAMObject {
+
     public id: string;
+
     constructor(public _id: any,
                 public createdAt: Date,
                 public updatedAt: Date,
@@ -69,12 +74,21 @@ export class RAMObject implements IRAMObject {
                 public resourceVersion: string) {
         this.id = _id ? _id.toString() : undefined;
     }
+
     public save(fn?: (err: any, product: this, numAffected: number) => void): Promise<this> {
         return null;
     }
+
     public delete(): void {
         return null;
     }
+
+    public enforcePermissions(templates: Permissions, enforcers: IPermissionEnforcer<any>[]): Promise<Permissions> {
+        return null;
+    }
+
+    public abstract getPermissions(): Promise<Permissions>;
+
 }
 
 // RAMSchema ..........................................................................................................
@@ -92,9 +106,28 @@ export const RAMSchema = (schema: Object) => {
     result.plugin(mongooseIdValidator);
     result.plugin(mongooseDeepPopulate);
 
-    result.method('delete', () => {
+    result.method('delete', async function() {
         this.deleteInd = true;
-        this.save();
+        (this as IRAMObject).save();
+    });
+
+    result.method('enforcePermissions', async function(templates: Permissions, enforcers: IPermissionEnforcer<any>[]): Promise<Permissions> {
+        let permissions = new Permissions();
+        for (let template of templates.toArray()) {
+            let enforcer: IPermissionEnforcer<any>;
+            for (let anEnforcer of enforcers) {
+                if (anEnforcer.template && anEnforcer.template.code === template.code) {
+                    enforcer = anEnforcer;
+                    break;
+                }
+            }
+            if (enforcer) {
+                permissions.push(await enforcer.evaluate(this));
+            } else {
+                permissions.push(template);
+            }
+        }
+        return permissions;
     });
 
     return result;
@@ -120,6 +153,7 @@ export interface ICodeDecode {
 // exists for type safety only, do not add functions here
 export class CodeDecode implements ICodeDecode {
     public id: string;
+
     constructor(public _id: any,
                 public shortDecodeText: string,
                 public longDecodeText: string,
@@ -212,6 +246,44 @@ export const Model = <T extends mongoose.Document>(name: string, schema: mongoos
 
 };
 
+// permission enforcer ................................................................................................
+
+export interface IPermissionEnforcer<T> {
+    template: IPermission;
+    evaluate(source: T): Promise<IPermission>;
+    assert(source: T): Promise<void>;
+    isAllowed(source: T): Promise<boolean>;
+    isDenied(source: T): Promise<boolean>;
+    getLinkHref(source: T): Promise<string>;
+}
+
+export abstract class PermissionEnforcer<T> implements IPermissionEnforcer<T> {
+
+    constructor(public template: IPermission) {
+    }
+
+    public abstract evaluate(source: T): Promise<IPermission>;
+
+    public async assert(source: T): Promise<void> {
+        let permission = await this.evaluate(source);
+        Assert.assertPermission(permission);
+    }
+
+    public async isAllowed(source: T): Promise<boolean> {
+        return (await this.evaluate(source)).isAllowed();
+    }
+
+    public async isDenied(source: T): Promise<boolean> {
+        return (await this.evaluate(source)).isDenied();
+    }
+
+    public async getLinkHref(source: T): Promise<string> {
+        let link = (await this.evaluate(source)).link;
+        return link ? link.href : undefined;
+    }
+
+}
+
 // helpers ............................................................................................................
 
 /**
@@ -253,13 +325,23 @@ export class Assert {
         this.assertTrue(condition, failMessage, `${value1} != ${value2}`);
     }
 
+    public static checkCaseInsensitiveEqual(value1: string, value2: string): boolean {
+        return _.trim(value1).toLowerCase() === _.trim(value2).toLowerCase();
+    }
+
     public static assertCaseInsensitiveEqual(value1: string, value2: string, failMessage: string, detail?: string) {
-        const condition = _.trim(value1).toLowerCase() === _.trim(value2).toLowerCase();
+        const condition = Assert.checkCaseInsensitiveEqual(value1, value2);
         this.assertTrue(condition, failMessage, detail);
     }
 
     public static assertGreaterThanEqual(value: number, min: number, failMessage: string, detail?: string) {
         this.assertTrue(value >= min, failMessage, detail);
+    }
+
+    public static assertPermission(permission: IPermission) {
+        if (!permission.isAllowed()) {
+            throw new Error(permission.messages.length > 0 ? permission.messages[0] : undefined);
+        }
     }
 
 }

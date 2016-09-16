@@ -1,14 +1,13 @@
 <page-header [identity]="identity"
              tab="GIVE_AUTHORISATION"
-             [messages]="globalMessages"
-             [giveAuthorisationsEnabled]="giveAuthorisationsEnabled"></page-header>
+             [messages]="globalMessages"></page-header>
 
 <div class="page-header">
     <h3><strong>Option 1</strong></h3>
 </div>
 <p class="lead">
     <h4><strong>{{displayName}}</strong> {{'addRelationship.complete.printOption1' | translate}}
-    <a href="">{{'addRelationship.complete.printOption2' | translate}} </a> {{'addRelationship.complete.printOption3' | translate}} {{displayName}}.</h4>
+    <a (click)="goToPrintPage()">{{'addRelationship.complete.printOption2' | translate}}</a> {{'addRelationship.complete.printOption3' | translate}} {{displayName}}.</h4>
 </p>
 
 <br/>
@@ -21,7 +20,6 @@
     <form class="form-horizontal" [formGroup]='form' (ngSubmit)="onSubmitEmail()">
         <fieldset>
             <div class="form-group">
-                <label class="col-lg-2 control-label">Email</label>
                 <div class="col-lg-8">
                     <input [formControl]="form.find('email')" class="form-control" placeholder="Email ..." type="email">
                 </div>
@@ -43,7 +41,6 @@
     <form class="form-horizontal" [formGroup]='formUdn' (ngSubmit)="onSubmitUdn()">
         <fieldset>
             <div class="form-group">
-                <label class="col-lg-2 control-label">UDN</label>
                 <div class="col-lg-8">
                     <input [formControl]="formUdn.find('udn')" class="form-control" type="text" placeholder="UDN ...">
                 </div>

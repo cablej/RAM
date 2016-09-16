@@ -3,8 +3,8 @@ import {ROUTER_DIRECTIVES, ActivatedRoute, Router, Params} from '@angular/router
 import {FormBuilder} from '@angular/forms';
 
 import {AbstractPageComponent} from '../abstract-page/abstract-page.component';
+import {Constants} from '../../../../commons/constants';
 import {RAMServices} from '../../services/ram-services';
-import {RAMConstants} from '../../services/ram-constants.service';
 
 import {IPrincipal} from '../../../../commons/api';
 
@@ -53,7 +53,7 @@ export class WelcomeHomeComponent extends AbstractPageComponent {
                 this.services.route.goToAgencySelectBusinessForAuthorisationsPage();
             } else {
                 this.services.route.goToRelationshipsPage(
-                    this.services.model.getLinkHrefByType(RAMConstants.Link.SELF, this.me.identity)
+                    this.services.model.getLinkHrefByType(Constants.Link.SELF, this.me.identity)
                 );
             }
         } else {

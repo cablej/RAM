@@ -1,15 +1,8 @@
 <form [formGroup]='form'>
-    <ng2-markdown [markdown]="data.markdown"></ng2-markdown>
-
     <div class="form-group col-md-12">
-        <label><h4><input type="checkbox" [formControl]='form.controls["accepted"]'> {{'addRelationship.declaration.agree' | translate}}</h4></label>
+        <blockquote><ng2-markdown [markdown]="markdown"></ng2-markdown></blockquote>
+        <div class="checkbox">
+            <label><input type="checkbox" [formControl]='form.controls["accepted"]'> <strong>I agree to this declaration</strong></label>
+        </div>
     </div>
-    <button class="col-xs-6 col-sm-3 btn btn-default"
-            (click)="back()">&#8592; {{'back' | translate}}
-    </button>
-    <button class=" col-xs-6 col-sm-3 col-sm-offset-6 btn btn-primary"
-            [disabled]='!(form.controls["accepted"].valid && isAuthorizedBtnEnabled)'
-            (click)="createRelationship()"
-    >{{'addRelationship.authorise' | translate}} →
-    </button>
 </form>

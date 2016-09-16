@@ -31,19 +31,7 @@ export class JMFoodPackagingRelationshipsSeeder {
                     attributes: [
                         await Seeder.createRelationshipAttributeModel({
                             value: true,
-                            attributeName: Seeder.permissionCustomisationAllowedInd_relAttributeName
-                        } as any),
-                        await Seeder.createRelationshipAttributeModel({
-                            value: true,
                             attributeName: Seeder.delegateManageAuthorisationAllowedInd_relAttributeName
-                        } as any),
-                        await Seeder.createRelationshipAttributeModel({
-                            value: true,
-                            attributeName: Seeder.delegateRelationshipTypeDeclaration_relAttributeName
-                        } as any),
-                        await Seeder.createRelationshipAttributeModel({
-                            value: true,
-                            attributeName: Seeder.subjectRelationshipTypeDeclaration_relAttributeName
                         } as any)
                     ]
                 } as any);

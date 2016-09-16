@@ -1,11 +1,53 @@
 {
+
   "HELLO" : "Hi there",
+
   "Party Type" : "Party Type",
   "Authorisation Type" : "Authorisation Type",
+
   "error.identityIdInvalid" : "Identity Id is not valid",
   "error.pageInvalid" : "Page is not valid",
   "error.pageSizeInvalid" : "Page Size is not valid",
 
-  "acceptRelationship.insufficientStrength" : "YOUR CREDENTIAL CANNOT ACCEPT THIS AUTHORISATION. The identity in your credential has not been verified to the level required to accept a universal representative authorisation. To accept this authorisation you need to verify the identity of your credential or use a credential with a verified identity. See Help for instructions."
+  "security.notAuthenticated" : "Unable to continue as you are not authenticated",
+  "security.noAccess" : "Unable to access this resource",
+
+  "identity.createRelationship.notABN" : "Unable to create an Authorisation for a non-ABN organisation",
+
+  "relationship.listAuskeys.notABN" : "Unable to list AUSkeys for a non-ABN organisation",
+
+  "relationship.claim.notPending" : "Unable to claim a non-pending relationship",
+  "relationship.claim.notInvitation" : "Unable to claim a non-invitation relationship",
+  "relationship.claim.invalidInvitationStatus" : "Unable to claim a non-pending relationship",
+  "relationship.claim.expiredInvitation" : "Unable to claim an expired relationship invitation",
+  "relationship.claim.mismatchedName" : "Identity does not match",
+  "relationship.claim.agencyUserNotAllowed" : "Agency Users cannot claim relationships",
+  "relationship.claim.mismatchedABN" : "You cannot accept an authorisation with an AUSkey from a different ABN. AUSkeys only have authorisation for the ABN they are issued under.",
+
+  "relationship.accept.notPending" : "Unable to accept a non-pending relationship",
+  "relationship.accept.notInvitation" : "Unable to accept a non-invitation relationship",
+  "relationship.accept.notDelegate" : "Unable to accept a relationship you are not the delegate of",
+  "relationship.accept.insufficientStrength" : "YOUR CREDENTIAL CANNOT ACCEPT THIS AUTHORISATION. The identity in your credential has not been verified to the level required to accept a universal representative authorisation. To accept this authorisation you need to verify the identity of your credential or use a credential with a verified identity. See Help for instructions.",
+
+  "relationship.reject.notPending": "Unable to reject a non-pending relationship",
+  "relationship.reject.notInvitation": "Unable to accept a non-invitation relationship",
+
+  "relationship.notifyDelegate.notInvitation": "Unable to notify delegate for a non-invitation relationship",
+  "relationship.notifyDelegate.invalidInvitationStatus": "Unable to notify delegate for a non-pending invitation",
+
+  "relationship.printInvitation.notInvitation" : "Unable to print a non-invitation relationship",
+  "relationship.printInvitation.invalidInvitationStatus": "Unable to print for a non-pending invitation",
+
+  "relationship.modify.managedExternally": "Unable to modify an externally managed relationship",
+  "relationship.modify.invalidStatus": "Unable to modify a non-pending or non-accepted relationship",
+  "relationship.modify.insufficientStrength": "Unable to modify a stronger relationship",
+  "relationship.modify.sameDelegate": "Unable to modify your own delegate relationship",
+  "relationship.modify.notAuthAdmin": "Unable to modify relationship without auth admin privileges",
+
+  "relationship.canEditDelegate.invalidStatus": "Unable to modify delegate for a non-pending",
+
+  "relationship.canViewDob.invalidStatus": "Unable to view DOB for a non-pending",
+
+  "BYE" : "Bye"
 
 }

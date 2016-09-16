@@ -6,6 +6,7 @@ export interface IRelationshipAttributeName extends ICodeDecode {
     classifier: string;
     category: string;
     permittedValues: string[];
+    appliesToInstance: boolean;
 }
 
 export class RelationshipAttributeName extends CodeDecode implements IRelationshipAttributeName {
@@ -23,7 +24,8 @@ export class RelationshipAttributeName extends CodeDecode implements IRelationsh
                 public domain: string,
                 public classifier: string,
                 public category: string,
-                public permittedValues: string[]) {
+                public permittedValues: string[],
+                public appliesToInstance: boolean) {
         super(code, shortDecodeText, longDecodeText, startTimestamp, endTimestamp);
     }
 }

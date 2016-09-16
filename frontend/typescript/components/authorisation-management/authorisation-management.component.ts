@@ -6,6 +6,7 @@ import {IRelationshipAttributeNameUsage} from '../../../../commons/api';
     templateUrl: 'authorisation-management.component.html'
 })
 export class AuthorisationManagementComponent {
+
     @Input('disabled') public disabled:boolean;
     @Input('title') public title:string;
     @Input('data') public data:AuthorisationManagementComponentData;
@@ -18,6 +19,7 @@ export class AuthorisationManagementComponent {
     public isCanManagePermissionsSet() {
         return this.data.value;
     }
+
 }
 
 export interface AuthorisationManagementComponentData {

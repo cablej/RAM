@@ -1,57 +1,69 @@
-import {OnInit, Input, Output, EventEmitter, Component} from '@angular/core';
-import {Validators, REACTIVE_FORM_DIRECTIVES, FormBuilder, FormGroup, FormControl, FORM_DIRECTIVES } from '@angular/forms';
-
-import {
-    IRelationshipType,
-    IHrefValue
-} from '../../../../commons/api';
+import {OnInit, OnChanges, Input, Output, EventEmitter, Component, SimpleChanges} from '@angular/core';
+import {Validators, FormBuilder, FormControl, FORM_DIRECTIVES, REACTIVE_FORM_DIRECTIVES} from '@angular/forms';
+import {SimpleForm, SimpleFormControl} from '../../commons/form';
+import {IRelationshipType, IHrefValue} from '../../../../commons/api';
+import {CodeDecode} from '../../../../commons/dtos/codeDecode.dto';
 
 @Component({
     selector: 'authorisation-type',
     templateUrl: 'authorisation-type.component.html',
-    directives: [REACTIVE_FORM_DIRECTIVES,FORM_DIRECTIVES]
+    directives: [REACTIVE_FORM_DIRECTIVES, FORM_DIRECTIVES]
 })
 
-export class AuthorisationTypeComponent implements OnInit {
+export class AuthorisationTypeComponent implements OnInit, OnChanges {
 
-    public form: FormGroup;
-    public selectedAuthType: IHrefValue<IRelationshipType>;
+    public form: SimpleForm<AuthorisationTypeComponentData>;
 
     @Input('data') public data: AuthorisationTypeComponentData;
     @Input('options') public options: IHrefValue<IRelationshipType>[];
 
     @Output('dataChange') public dataChanges = new EventEmitter<AuthorisationTypeComponentData>();
-
     @Output('isValid') public isValid = new EventEmitter<boolean>();
 
-    constructor(private _fb: FormBuilder) { }
+    constructor(private fb: FormBuilder) {
+        this.form = new SimpleForm<AuthorisationTypeComponentData>(this.fb);
+    }
 
     public ngOnInit() {
-        this.form = this._fb.group({
-            'authType': [this.data.authType,
-                Validators.compose([this.isAuthTypeSelected])
-            ]
+
+        // auth type control
+        this.form.add(new SimpleFormControl('authType')
+            .value(this.data.authType ? this.data.authType.value.code : '-')
+            .validator(Validators.compose([this.isAuthTypeSelected]))
+            .transformer((code: string) => {
+                return this.getRefByCode(code);
+            })
+        );
+
+        // emit events
+        this.form.onChange((data: AuthorisationTypeComponentData) => {
+            this.dataChanges.emit(data);
+            this.isValid.emit(this.form.isValid());
         });
-        this.form.valueChanges.subscribe((v: AuthorisationTypeComponentData) => {
-            this.dataChanges.emit(v);
-            this.isValid.emit(this.form.valid);
-        });
+
+        // emit initial valid
+        this.isValid.emit(this.form.isValid());
+
     }
 
-    public onAuthTypeChange(value: string) {
-        for (let type of this.options) {
-            if (type.value.code === value) {
-                this.selectedAuthType = type;
-                this.data.authType = value;
-            }
-        }
+    public ngOnChanges(changes: SimpleChanges): any {
+        this.form.updateValue('authType', this.data.authType ? this.data.authType.value.code : '-');
     }
 
-    private isAuthTypeSelected = (authType: FormControl) => {
-        return (authType.value === 'choose') ? { authorisationTypeNotSet: { valid: false } } : null;
+    public onAuthTypeChange(code: string) {
+        this.data.authType = this.getRefByCode(code);
+    }
+
+    private getRefByCode(code: string) {
+        return CodeDecode.getRefByCode(this.options, code) as IHrefValue<IRelationshipType>;
+    }
+
+    private isAuthTypeSelected = (control: FormControl) => {
+        return (control.value === '-') ? {authorisationTypeNotSet: {valid: false}} : null;
     };
+
 }
 
 export interface AuthorisationTypeComponentData {
-    authType: string;
+    authType: IHrefValue<IRelationshipType>;
 }

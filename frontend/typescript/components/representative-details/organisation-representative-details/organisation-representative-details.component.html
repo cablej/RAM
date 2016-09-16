@@ -1,14 +1,16 @@
-<form [formGroup]="form">
-    <div class="form-group">
+<form [formGroup]="form" *ngIf="!readOnly">
+    <div>
         <div class="col-md-12">
             <h4>{{'addRelationship.abn.label' | translate}}*</h4>
         </div>
-        <div class="col-md-4"
-        [class.has-error]="!form.controls['abn'].valid">
-            <input class="form-control" type="number"
-            minlength=11 maxlength=14 [disabled]='isCompanyNameSet()'
-            [formControl]="form.controls['abn']"
-            placeholder="{{'addRelationship.abn.placeholder' | translate}}">
+        <div class="col-md-4" [class.has-error]="!form.controls['abn'].valid">
+            <input class="form-control"
+                   type="number"
+                   minlength=11
+                   maxlength=14
+                   [disabled]='isDisabled()'
+                   [formControl]="form.controls['abn']"
+                   placeholder="{{'addRelationship.abn.placeholder' | translate}}">
         </div>
         <div class="col-md-4">
             <h4>{{organisationName}}</h4>
@@ -16,12 +18,34 @@
         <div class="col-md-4">
             <span *ngIf='!isCompanyNameSet()'>
                 <button class="col-md-12 btn btn-primary"
-                [disabled]="!form.controls['abn'].valid" (click)='validateOrganisationName(form.controls["abn"].value)' >
-                    {{'addRelationship.checkABN' | translate}}</button>
-            </span><span *ngIf='isCompanyNameSet()'>
-                <button class="col-md-12 btn btn-default"
-                (click)="clearOrganisationABN()" >{{'addRelationship.changeABN' | translate}}</button>
+                        [disabled]="!form.controls['abn'].valid"
+                        (click)='validateOrganisationName(form.controls["abn"].value)'>{{'addRelationship.checkABN' | translate}}</button>
             </span>
+            <span *ngIf='isCompanyNameSet()'>
+                <button class="col-md-12 btn btn-default"
+                        (click)="clearOrganisationABN()">{{'addRelationship.changeABN' | translate}}</button>
+            </span>
+        </div>
+    </div>
+</form>
+
+<form [formGroup]=form *ngIf="readOnly">
+    <div>
+        <div class="col-md-4" [class.has-error]="!form.controls['abn'].valid">
+            <h4>{{'addRelationship.abn.label' | translate}}*</h4>
+            <input class="form-control"
+                   type="text"
+                   name="abn"
+                   [disabled]=true
+                   [formControl]="form.controls['abn']">
+        </div>
+        <div class="col-md-4" [class.has-error]="!form.controls['organisationName'].valid">
+            <h4>{{'addRelationship.organisationName.label' | translate}}</h4>
+            <input class="form-control"
+                   type="text"
+                   name="organisationName"
+                   [disabled]=true
+                   [formControl]="form.controls['organisationName']">
         </div>
     </div>
 </form>

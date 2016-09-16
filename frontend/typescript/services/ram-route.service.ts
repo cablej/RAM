@@ -53,29 +53,28 @@ export class RAMRouteService {
         ]);
     }
 
-    public goToRelationshipAddCompletePage(idValue: string, code: string, displayName: string) {
+    public goToRelationshipAddCompletePage(identityHref: string, relationshipHref: string) {
         this.router.navigate(['/relationships/add/complete',
-            this.encodeURIComponent(idValue, false),
-            this.encodeURIComponent(code, false),
-            this.encodeURIComponent(displayName, false)
+            this.encodeURIComponent(identityHref, true),
+            this.encodeURIComponent(relationshipHref, true)
         ]);
     }
 
-    public goToRelationshipEnterCodePage(idValue: string, msg?: string) {
+    public goToRelationshipEnterCodePage(identityHref: string, msg?: string) {
         const queryParams = {};
         if (msg) {
             queryParams['msg'] = msg;
         }
         this.router.navigate(['/relationships/add/enter',
-                this.encodeURIComponent(idValue, false)
+                this.encodeURIComponent(identityHref, true)
             ], {queryParams: queryParams}
         );
     }
 
-    public goToRelationshipAcceptPage(idValue: string, code: string) {
+    public goToRelationshipAcceptPage(identityHref: string, relationshipHref: string) {
         this.router.navigate(['/relationships/add/accept',
-            this.encodeURIComponent(idValue, false),
-            this.encodeURIComponent(code, false)
+            this.encodeURIComponent(identityHref, true),
+            this.encodeURIComponent(relationshipHref, true)
         ]);
     }
 
