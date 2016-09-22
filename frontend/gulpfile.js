@@ -196,7 +196,7 @@ gulp.task("serve", ["copy:i18n", "copy:images", "scss:watch", "ts:watch", "html:
 gulp.task("serve:no-browser-sync", ["copy:i18n", "copy:images", "copy:jslib", "build:app"], function () {
     return connect.server({
         root: ['./dist/'],
-        port: 3001,
+        port: 3000,
         middleware: function (connect, opt) {
             return [
                 proxyHttp('/api', {
