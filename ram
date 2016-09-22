@@ -191,6 +191,15 @@ case "$1" in
     echo ""
     ;;
 
+  'start:frontend:no-browser-sync')
+    echo ""
+    echo "Starting frontend without using browser-sync"
+    echo ""
+    cd frontend
+    gulp serve:no-browser-sync
+    echo ""
+    ;;
+
   'start:frontend-no-lint')
     echo ""
     echo "Starting frontend"
@@ -475,6 +484,7 @@ case "$1" in
     echo "$(tput setaf 3)    test:api                             $(tput sgr0)      Runs API tests"
     echo ""
     echo "$(tput setaf 3)    start:frontend                       $(tput sgr0)      Starts local frontend server"
+    echo "$(tput setaf 3)    start:frontend:no-browser-sync       $(tput sgr0)      Starts local frontend server without using browser sync"
     echo "$(tput setaf 3)    start:backend                        $(tput sgr0)      Starts local backend server"
     echo "$(tput setaf 3)    start:frontend-no-lint               $(tput sgr0)      Starts local frontend server without linting"
     echo "$(tput setaf 3)    start:backend-no-lint                $(tput sgr0)      Starts local backend server without linting"

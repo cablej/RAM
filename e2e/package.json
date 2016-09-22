@@ -1,0 +1,34 @@
+{
+  "name": "ram-e2e",
+  "version": "1.0.0",
+  "description": "Setup:   $ npm install -g protractor   $ webdriver-manager update",
+  "main": "conf.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "codelyzer": "latest",
+    "gulp": "latest",
+    "gulp-browserstack": "^1.0.3",
+    "gulp-ignore": "latest",
+    "gulp-protractor": "^2.5.0",
+    "gulp-rimraf": "latest",
+    "gulp-sequence": "latest",
+    "gulp-sourcemaps": "latest",
+    "gulp-tslint": "latest",
+    "gulp-typescript": "latest",
+    "tslint": "latest",
+    "tslint-microsoft-contrib": "latest",
+    "typescript": "latest",
+    "typings": "latest",
+    "yargs": "^4.8.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browserstack-local": "^1.1.0",
+    "colors": "^1.1.2",
+    "gulp": "^3.9.1",
+    "protractor": "^4.0.0"
+  }
+}
