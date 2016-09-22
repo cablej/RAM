@@ -21,7 +21,7 @@ var merge = require('merge-stream');
 var args = require('yargs').argv;
 var filter = require('gulp-filter');
 var connect = require('gulp-connect');
-var proxy = require('http-proxy-middleware');
+var proxyHttp = require('http-proxy-middleware');
 
 gulp.task("copy:font", function () {
     return gulp.src(["fonts/{**,./}/*.{eot,svg,ttf,woff,woff2}"], { base: "./" })
@@ -196,10 +196,10 @@ gulp.task("serve", ["copy:i18n", "copy:images", "scss:watch", "ts:watch", "html:
 gulp.task("serve:no-browser-sync", ["copy:i18n", "copy:images", "copy:jslib", "build:app"], function () {
     return connect.server({
         root: ['./dist/'],
-        port: 3001,
+        port: 3000,
         middleware: function (connect, opt) {
             return [
-                proxy('/api', {
+                proxyHttp('/api', {
                     target: 'http://localhost:3000',
                     changeOrigin: true
                 })
