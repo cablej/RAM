@@ -18,7 +18,7 @@ System.config({
     "@angular/router": "npm:@angular/router@3.0.0-beta.2",
     "crypto": "github:jspm/nodelibs-crypto@0.1.0",
     "css": "github:systemjs/plugin-css@0.1.23",
-    "es6-shim": "npm:es6-shim@0.35.1",
+    "es6-shim": "npm:es6-shim@0.35.0",
     "jquery": "npm:jquery@2.2.4",
     "lodash": "npm:lodash@4.13.1",
     "ng2-bootstrap": "npm:ng2-bootstrap@1.0.17",
