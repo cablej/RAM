@@ -88,7 +88,7 @@ gulp.task("build:jspm", ["copy:systemJsConf", "copy:jspm-resources", "ts:compile
  * for quick loading. Called by dist and serve. Used as long as
  * URL search doesn't start with _?debug_
  */
-gulp.task("build:app", ["ts:compile", "copy:dev"], function () {
+gulp.task("build:app", ["build:jspm","copy:dev"], function () {
     return gulp.src('dist/js/frontend/typescript/Boot.js')
     .pipe(jspm_build({
         fileName:   'ram-app',
