@@ -169,7 +169,7 @@ gulp.task("ts:lint", function () {
 });
 gulp.task("watch", ["scss:watch", "ts:watch", "html:watch", "data:watch", "i18n:watch"]);
 
-gulp.task("serve", ["copy:i18n", "copy:images", "scss:watch", "ts:watch", "html:watch", "data:watch", "i18n:watch", "copy:jslib", "build:app"], function () {
+gulp.task("serve:with-browser-sync", ["copy:i18n", "copy:images", "scss:watch", "ts:watch", "html:watch", "data:watch", "i18n:watch", "copy:jslib"], function () {
     var proxyOptions = url.parse("http://localhost:3000/api");
     proxyOptions.route = "/api";
 
@@ -193,7 +193,7 @@ gulp.task("serve", ["copy:i18n", "copy:images", "scss:watch", "ts:watch", "html:
     ], [browserSync.reload]);
 });
 
-gulp.task("serve:no-browser-sync", ["copy:i18n", "copy:images", "copy:jslib", "build:app"], function () {
+gulp.task("serve", ["copy:i18n", "copy:images", "copy:jslib", "build:app"], function () {
     return connect.server({
         root: ['./dist/'],
         port: 3000,
