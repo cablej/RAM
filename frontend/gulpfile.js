@@ -193,7 +193,7 @@ gulp.task("serve:with-browser-sync", ["copy:i18n", "copy:images", "scss:watch", 
     ], [browserSync.reload]);
 });
 
-gulp.task("serve", ["copy:i18n", "copy:images", "copy:jslib", "build:app"], function () {
+gulp.task("serve", ["copy:i18n", "copy:images", "copy:jslib", "build:app","copy:index.html", "copy:dev","data:watch"], function () {
     return connect.server({
         root: ['./dist/'],
         port: 3000
