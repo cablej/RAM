@@ -196,14 +196,14 @@ gulp.task("serve:with-browser-sync", ["copy:i18n", "copy:images", "scss:watch", 
 gulp.task("serve", ["copy:i18n", "copy:images", "copy:jslib", "build:app"], function () {
     return connect.server({
         root: ['./dist/'],
-        port: 3000,
-        middleware: function (connect, opt) {
-            return [
-                proxyHttp('/api', {
-                    target: 'http://localhost:3000',
-                    changeOrigin: true
-                })
-            ]
-        }
+        port: 3000
+        // ,middleware: function (connect, opt) {
+        //     return [
+        //         proxyHttp('/api', {
+        //             target: 'http://localhost:3000',
+        //             changeOrigin: true
+        //         })
+        //     ]
+        // }
     });
 });
